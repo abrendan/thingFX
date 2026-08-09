@@ -1,0 +1,266 @@
+.card {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  margin: 0 12px 12px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  background: rgba(var(--c-panel), 0.65);
+  border: 1px solid rgba(var(--c-fg), 0.1);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  box-shadow:
+    0 4px 6px rgba(var(--c-shade), 0.3),
+    0 20px 50px rgba(var(--c-shade), 0.5),
+    inset 0 1px 0 rgba(var(--c-fg), 0.08);
+  flex: 1;
+  min-height: 0;
+}
+
+/* Album Art */
+.artWrapper {
+  flex-shrink: 0;
+  width: 200px;
+  height: 200px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(var(--c-fg), 0.06);
+  box-shadow:
+    0 8px 28px rgba(var(--c-shade), 0.6),
+    0 0 0 1px rgba(var(--c-fg), 0.06);
+}
+
+.art {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.art[data-visible='true'] {
+  opacity: 1;
+}
+
+.artPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(var(--c-fg), 0.15);
+}
+
+.artPlaceholder .material-icons {
+  font-size: 64px;
+}
+
+/* Right Panel */
+.right {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Track Info */
+.trackInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.trackName {
+  font-size: 22px;
+  font-weight: 800;
+  color: rgba(var(--c-fg), 0.97);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.artists {
+  font-size: 16px;
+  font-weight: 500;
+  color: rgba(var(--c-fg), 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.album {
+  font-size: 13px;
+  color: rgba(var(--c-fg), 0.35);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Progress */
+.progressSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.progressBar {
+  width: 100%;
+  height: 6px;
+  background: rgba(var(--c-fg), 0.12);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.2s linear;
+}
+
+.times {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: rgba(var(--c-fg), 0.4);
+  letter-spacing: 0.02em;
+}
+
+/* Controls */
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.controlBtn {
+  background: none;
+  border: none;
+  color: rgba(var(--c-fg), 0.85);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, color 0.15s ease;
+  min-width: 48px;
+  min-height: 48px;
+}
+
+.controlBtn:active {
+  background: rgba(var(--c-fg), 0.12);
+  color: var(--c-text);
+}
+
+.controlBtn:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.controlBtn .material-icons {
+  font-size: 32px;
+}
+
+.playBtn {
+  background: var(--accent);
+  border: none;
+  color: var(--c-text);
+  cursor: pointer;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(var(--accent-rgb), 0.5);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.playBtn:active {
+  transform: scale(0.92);
+  box-shadow: 0 2px 10px rgba(var(--accent-rgb), 0.3);
+}
+
+.playBtn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.playBtn .material-icons {
+  font-size: 34px;
+}
+
+.secondaryBtn {
+  background: none;
+  border: none;
+  color: rgba(var(--c-fg), 0.35);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+  min-width: 48px;
+  min-height: 48px;
+}
+
+.secondaryBtn[data-active='true'] {
+  color: var(--accent);
+}
+
+.secondaryBtn:disabled {
+  opacity: 0.15;
+  cursor: default;
+}
+
+.secondaryBtn .material-icons {
+  font-size: 20px;
+}
+
+/* Bottom row */
+.bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.volumeRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.volumeRow[data-visible='true'] {
+  opacity: 1;
+}
+
+.volumeSlider {
+  flex: 1;
+  -webkit-appearance: none;
+  height: 4px;
+  background: rgba(var(--c-fg), 0.15);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.volumeSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+}

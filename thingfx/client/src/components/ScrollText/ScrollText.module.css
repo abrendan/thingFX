@@ -1,0 +1,14 @@
+.container {
+  overflow: hidden;
+  min-width: 0;
+}
+
+@keyframes scrollText {
+  0%,  15% { transform: translateX(0); }
+  45%, 55% { transform: translateX(var(--shift)); }
+  85%, 100% { transform: translateX(0); }
+}
+
+.scrolling {
+  animation: scrollText 7s ease-in-out infinite;
+}

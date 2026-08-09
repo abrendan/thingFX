@@ -1,0 +1,23 @@
+.app {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: opacity 0.5s ease;
+}
+
+.app[data-blurred='true'] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Content area below TopBar */
+.content {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+}

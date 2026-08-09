@@ -1,0 +1,117 @@
+.bar {
+  z-index: 10;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 44px;
+  flex-shrink: 0;
+  padding: 0 14px;
+}
+
+/* ── 3-column layout (always) ───────────────── */
+.leftCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 3px;
+}
+
+.rightCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* ── Normal mode text ───────────────────────── */
+.clock {
+  flex-shrink: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: rgba(var(--c-fg), 0.85);
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.date {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(var(--c-fg), 0.4);
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+
+.weather {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.weatherIcon {
+  font-size: 14px;
+  color: rgba(var(--c-fg), 0.65);
+}
+
+.weatherTemp {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(var(--c-fg), 0.65);
+  letter-spacing: 0.01em;
+}
+
+/* ── Volume indicator ───────────────────────── */
+.volIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 22px;
+  font-weight: 700;
+  color: rgba(var(--c-fg), 0.45);
+  letter-spacing: 0.01em;
+  transition: color 0.2s ease;
+}
+
+.volIndicator .material-icons {
+  font-size: 24px;
+}
+
+.volIndicator[data-maxed='true'] {
+  color: #ff6b6b;
+}
+
+/* ── Media player active mode ───────────────── */
+.bar[data-media-active='true'] {
+  height: 64px;
+}
+
+.bar[data-media-active='true'] .clock {
+  font-size: 32px;
+  font-weight: 800;
+  color: rgba(var(--c-fg), 0.95);
+  letter-spacing: -0.03em;
+}
+
+.bar[data-media-active='true'] .date {
+  font-size: 22px;
+  font-weight: 600;
+  color: rgba(var(--c-fg), 0.45);
+  letter-spacing: 0.01em;
+}
+
+.bar[data-media-active='true'] .weather {
+  gap: 6px;
+}
+
+.bar[data-media-active='true'] .weatherIcon {
+  font-size: 26px;
+  color: rgba(var(--c-fg), 0.6);
+}
+
+.bar[data-media-active='true'] .weatherTemp {
+  font-size: 24px;
+  font-weight: 600;
+  color: rgba(var(--c-fg), 0.6);
+}

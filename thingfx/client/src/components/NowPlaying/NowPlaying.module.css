@@ -1,0 +1,316 @@
+.screen {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* ── Top: art + info ─────────────────────────────────── */
+.top {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 20px;
+  padding: 10px 20px 4px;
+}
+
+/* Thumbnail mode — shrink content away from the art */
+.topThumbnail {
+  padding-right: 280px;
+}
+
+.topThumbnailLg {
+  padding-right: 360px;
+}
+
+/* Track info */
+.info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+}
+
+.source {
+  font-size: 16px;
+  font-weight: 500;
+  color: rgba(var(--c-fg), 0.55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trackName {
+  font-size: 38px;
+  font-weight: 800;
+  color: var(--c-text);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.artist {
+  font-size: 22px;
+  font-weight: 500;
+  color: rgba(var(--c-fg), 0.62);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Progress bar ────────────────────────────────────── */
+.progress {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px 12px;
+}
+
+/* Large thumbnail extends down past the progress bar row — keep the bar
+   and its right-hand time text clear of the art. */
+.progressThumbnailLg {
+  padding-right: 372px;
+}
+
+:global([data-orientation='portrait']) .progressThumbnailLg {
+  padding-right: 20px;
+}
+
+.progressTrack {
+  flex: 1;
+  height: 4px;
+  background: rgba(var(--c-fg), 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.2s linear;
+}
+
+.progressTime {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(var(--c-fg), 0.4);
+  letter-spacing: 0.03em;
+  min-width: 36px;
+  text-align: center;
+}
+
+/* ── Divider ─────────────────────────────────────────── */
+.divider {
+  flex-shrink: 0;
+  height: 1px;
+  background: rgba(var(--c-fg), 0.12);
+  margin: 0 16px;
+}
+
+/* Visualizer row — below artist name, above progress bar */
+.visualizerRow {
+  flex-shrink: 0;
+  padding: 0 20px 10px;
+  margin-top: -42px;
+  zoom: 1.56;
+}
+
+.visualizerRowThumbnail {
+  padding-right: 280px;
+}
+
+.visualizerRowThumbnailLg {
+  padding-right: 360px;
+}
+
+/* ── Controls ────────────────────────────────────────── */
+.controls {
+  flex-shrink: 0;
+  height: 110px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 8px;
+  background: rgba(var(--c-shade), 0.75);
+  border-top: 1px solid rgba(var(--c-fg), 0.1);
+}
+
+.btn {
+  background: rgba(var(--c-fg), 0.1);
+  border: 1px solid rgba(var(--c-fg), 0.15);
+  cursor: pointer;
+  color: rgba(var(--c-fg), 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s ease, transform 0.1s ease;
+}
+
+.btn .material-icons {
+  font-size: 36px;
+}
+
+.btn:active {
+  background: rgba(var(--c-fg), 0.25);
+  transform: scale(0.9);
+}
+
+.btn:disabled {
+  opacity: 0.2;
+  cursor: default;
+}
+
+.btn[data-active='true'] {
+  background: rgba(var(--accent-rgb), 0.25);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Play/pause — solid accent fill, stands out */
+.playBtn {
+  width: 88px;
+  height: 88px;
+  background: var(--accent);
+  border: none;
+  box-shadow: 0 4px 20px rgba(var(--accent-rgb), 0.5);
+}
+
+.playBtn .material-icons {
+  font-size: 50px;
+}
+
+
+.playBtn:active {
+  background: var(--accent);
+  transform: scale(0.9);
+  box-shadow: 0 2px 10px rgba(var(--accent-rgb), 0.3);
+}
+
+.btn[data-active='true'].likeBtn {
+  background: rgba(29, 185, 84, 0.2);
+  border-color: #1db954;
+  color: #1db954;
+}
+
+/* ── Portrait layout ─────────────────────────────────── */
+:global([data-orientation='portrait']) .top {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 18px 8px;
+}
+
+:global([data-orientation='portrait']) .topThumbnail,
+:global([data-orientation='portrait']) .topThumbnailLg {
+  padding-right: 18px;
+}
+
+:global([data-orientation='portrait']) .info {
+  flex: 0 0 auto;
+}
+
+:global([data-orientation='portrait']) .visualizerRow {
+  margin-top: 0;
+  zoom: 1;
+  padding: 0 18px 10px;
+}
+
+:global([data-orientation='portrait']) .visualizerRowThumbnail,
+:global([data-orientation='portrait']) .visualizerRowThumbnailLg {
+  padding-right: 18px;
+}
+
+:global([data-orientation='portrait']) .controls {
+  height: auto;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 10px calc(14px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Rotated left, the bottom of the UI sits against the physical volume
+   wheel — lift the controls away from it so they stay reachable. */
+:global(html[data-rotate='portrait-left']) .controls {
+  padding-bottom: calc(52px + env(safe-area-inset-bottom, 0px));
+}
+
+:global([data-orientation='portrait']) .btn {
+  width: 70px;
+  height: 70px;
+}
+
+:global([data-orientation='portrait']) .btn .material-icons {
+  font-size: 32px;
+}
+
+:global([data-orientation='portrait']) .playBtn {
+  width: 92px;
+  height: 92px;
+}
+
+:global([data-orientation='portrait']) .playBtn .material-icons {
+  font-size: 52px;
+}
+
+/* ── Visualizer size (set from the desktop app) ──────── */
+:global([data-visualizer-size='large']) .visualizerRow {
+  zoom: 2.1;
+  margin-top: -30px;
+}
+
+:global([data-visualizer-size='xl']) .visualizerRow {
+  zoom: 2.7;
+  margin-top: -20px;
+}
+
+/* The zoom on the visualizer row also multiplies its padding, so the
+   thumbnail clearance must shrink with the zoom factor or the visualizer
+   gets squeezed to nothing. */
+:global([data-visualizer-size='large']) .visualizerRowThumbnail {
+  padding-right: 134px;
+}
+
+:global([data-visualizer-size='xl']) .visualizerRowThumbnail {
+  padding-right: 104px;
+}
+
+:global([data-visualizer-size='large']) .visualizerRowThumbnailLg {
+  padding-right: 172px;
+}
+
+:global([data-visualizer-size='xl']) .visualizerRowThumbnailLg {
+  padding-right: 134px;
+}
+
+:global([data-orientation='portrait'][data-visualizer-size='large']) .visualizerRow {
+  zoom: 1.35;
+  margin-top: 0;
+}
+
+:global([data-orientation='portrait'][data-visualizer-size='xl']) .visualizerRow {
+  zoom: 1.75;
+  margin-top: 0;
+}
+
+:global([data-orientation='portrait'][data-visualizer-size='large']) .visualizerRowThumbnail,
+:global([data-orientation='portrait'][data-visualizer-size='xl']) .visualizerRowThumbnail,
+:global([data-orientation='portrait'][data-visualizer-size='large']) .visualizerRowThumbnailLg,
+:global([data-orientation='portrait'][data-visualizer-size='xl']) .visualizerRowThumbnailLg {
+  padding-right: 12px;
+}
