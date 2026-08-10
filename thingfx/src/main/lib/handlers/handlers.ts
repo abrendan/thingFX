@@ -15,6 +15,8 @@ import * as holdtolock from './holdtolock.js'
 import * as sleeptimer from './sleeptimer.js'
 import * as autoreturn from './autoreturn.js'
 import * as lockshortcut from './lockshortcut.js'
+import * as shutdown from './shutdown.js'
+import * as shutdownshortcut from './shutdownshortcut.js'
 import * as defaultview from './defaultview.js'
 import * as ping from './ping.js'
 import * as playback from './playback.js'
@@ -45,6 +47,8 @@ export const handlers: Handler[] = [
   sleeptimer,
   autoreturn,
   lockshortcut,
+  shutdown,
+  shutdownshortcut,
   defaultview,
   ping,
   playback,

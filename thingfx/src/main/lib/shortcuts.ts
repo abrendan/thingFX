@@ -83,7 +83,7 @@ export function getShortcuts() {
 }
 
 // Reserved IDs with special meaning on the client (e.g. preset buttons)
-const RESERVED_SHORTCUT_IDS = ['__lock__']
+const RESERVED_SHORTCUT_IDS = ['__lock__', '__shutdown__']
 
 export function addShortcut(shortcut: Shortcut) {
   if (RESERVED_SHORTCUT_IDS.includes(shortcut.id)) return

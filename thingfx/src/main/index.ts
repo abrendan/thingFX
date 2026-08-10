@@ -43,6 +43,7 @@ import {
   findCarThing,
   rebootCarThing,
   installApp,
+  checkInstalledApp,
   forwardSocketServer,
   getAdbExecutable,
   getBrightness,
@@ -392,7 +393,45 @@ async function setupIpcHandlers() {
           mainWindow?.webContents.send('carThingState', 'not_installed')
         }
       } else {
-        // Already installed — always mark ready, let UI handle version mismatch
+        // Already installed — if auto-install is on, reinstall when the
+        // client is missing from the device (e.g. after a reflash) or an
+        // update is pending; otherwise mark ready.
+        const willAutoInstall = getStorageValue('installAutomatically')
+        const cooldownElapsed = Date.now() - lastInstallTime > 60000
+
+        if (willAutoInstall && cooldownElapsed) {
+          const appMissing = await checkInstalledApp(found).then(
+            v => !v,
+            () => false
+          )
+          const bundledBuild = await getClientBuildId()
+          const updatePending =
+            lastVersion !== app.getVersion() ||
+            (!!bundledBuild &&
+              getStorageValue('lastInstalledClientBuild') !== bundledBuild)
+
+          if (appMissing || updatePending) {
+            lastInstallTime = Date.now()
+            mainWindow?.webContents.send('carThingState', 'installing')
+            try {
+              await installApp(found)
+              await recordInstalledClient()
+            } catch (err) {
+              log(
+                `Auto-reinstall failed: ${(err as Error).message}`,
+                'CarThingState',
+                LogLevel.ERROR
+              )
+              if (appMissing) {
+                // Device has no client at all and the install failed —
+                // don't pretend it's ready
+                mainWindow?.webContents.send('carThingState', 'not_installed')
+                return
+              }
+            }
+          }
+        }
+
         mainWindow?.webContents.send('carThingState', 'ready')
         await forwardSocketServer(found)
 

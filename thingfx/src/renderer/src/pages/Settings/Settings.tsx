@@ -589,7 +589,8 @@ const ClientTab: React.FC = () => {
               value={screensaverStyle}
               options={[
                 { value: 'bubbles', label: 'Bubbles' },
-                { value: 'clock', label: 'Clock' }
+                { value: 'clock', label: 'Clock' },
+                { value: 'aurora', label: 'Clock (Aurora)' }
               ]}
               onChange={value => {
                 window.api.setStorageValue('screensaverStyle', value as string)
@@ -1340,6 +1341,7 @@ const ButtonsTab: React.FC = () => {
           >
             <option value=''>— None —</option>
             <option value='__lock__'>Lock PC</option>
+            <option value='__shutdown__'>Shut Down PC (asks first)</option>
             {shortcuts.map(s => (
               <option key={s.id} value={s.id}>{s.name ?? s.id}</option>
             ))}

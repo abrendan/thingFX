@@ -134,6 +134,64 @@
   animation: fadeIn 1.2s ease-out;
 }
 
+/* Aurora — slow-moving red and blue glow behind the clock */
+.aurora {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.auroraRed,
+.auroraBlue {
+  position: absolute;
+  width: 75vmax;
+  height: 75vmax;
+  border-radius: 50%;
+  filter: blur(70px);
+  will-change: transform;
+}
+
+.auroraRed {
+  background: radial-gradient(
+    50% 50% at 50% 50%,
+    rgba(220, 45, 65, 0.55) 0%,
+    rgba(220, 45, 65, 0) 70%
+  );
+  top: -30%;
+  left: -25%;
+  animation: auroraDriftA 26s ease-in-out infinite alternate;
+}
+
+.auroraBlue {
+  background: radial-gradient(
+    50% 50% at 50% 50%,
+    rgba(45, 90, 235, 0.55) 0%,
+    rgba(45, 90, 235, 0) 70%
+  );
+  bottom: -30%;
+  right: -25%;
+  animation: auroraDriftB 32s ease-in-out infinite alternate;
+}
+
+@keyframes auroraDriftA {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(30vw, 18vh) scale(1.25); }
+  100% { transform: translate(55vw, 5vh) scale(0.9); }
+}
+
+@keyframes auroraDriftB {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(-28vw, -20vh) scale(1.2); }
+  100% { transform: translate(-50vw, -8vh) scale(0.95); }
+}
+
+.clockTime,
+.clockDivider,
+.clockDate,
+.clockWeather {
+  position: relative;
+}
+
 .clockTime {
   font-size: 130px;
   font-weight: 800;

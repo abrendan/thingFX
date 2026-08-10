@@ -14,6 +14,7 @@ import ShortcutsView from '@/components/ShortcutsView/ShortcutsView.tsx'
 import LoadingScreen from '@/components/LoadingScreen/LoadingScreen.tsx'
 import Menu from '@/components/Menu/Menu.tsx'
 import ButtonToast from '@/components/ButtonToast/ButtonToast.tsx'
+import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog.tsx'
 
 import { extractAccentColor } from '@/lib/colorExtract.ts'
 
@@ -93,6 +94,9 @@ const App: React.FC = () => {
   // Toast state
   const [toast, setToast] = useState<{ btn: string; name: string; icon: string | null } | null>(null)
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Shutdown confirmation (used by preset buttons and the launcher tile)
+  const [shutdownConfirm, setShutdownConfirm] = useState(false)
 
   const actionsRef = useRef(actions)
   const socketRef = useRef(socket)
@@ -179,6 +183,9 @@ const App: React.FC = () => {
     socket.send(JSON.stringify({ type: 'backbutton' }))
     socket.send(JSON.stringify({ type: 'screensaverstyle' }))
     socket.send(JSON.stringify({ type: 'weather' }))
+    // Load apps + preset button mappings up front so the physical buttons
+    // work before the launcher is ever opened
+    socket.send(JSON.stringify({ type: 'apps' }))
     return () => socket.removeEventListener('message', listener)
   }, [socket])
 
@@ -223,6 +230,14 @@ const App: React.FC = () => {
   useEffect(() => {
     document.documentElement.dataset.visualizerSize = visualizerSize
   }, [visualizerSize])
+
+  // Wake from the screensaver as soon as music starts playing
+  useEffect(() => {
+    if (playerData?.isPlaying && sleepState !== 'off') {
+      setSleepState('off')
+      socketRef.current?.send(JSON.stringify({ type: 'wake' }))
+    }
+  }, [playerData?.isPlaying, sleepState, setSleepState])
 
   // Sleep timer — only while nothing is playing; user input resets it
   useEffect(() => {
@@ -330,6 +345,14 @@ const App: React.FC = () => {
             toastTimerRef.current = setTimeout(() => setToast(null), 1800)
             break
           }
+          if (id === '__shutdown__') {
+            // Wake first so the screensaver's key capture doesn't swallow
+            // the dialog's Enter/Escape input
+            setSleepState('off')
+            socketRef.current?.send(JSON.stringify({ type: 'wake' }))
+            setShutdownConfirm(true)
+            break
+          }
           socketRef.current?.send(JSON.stringify({ type: 'apps', action: 'open', data: id }))
           const info = shortcutMapRef.current[id]
           const name = info?.name ?? info?.id ?? id
@@ -395,12 +418,23 @@ const App: React.FC = () => {
 
         <main className={styles.content}>
           {activeTab === 'nowplaying' && <NowPlaying showVisualizer={visualizerOn} bgStyle={bgStyle} wheelMode={wheelMode} />}
-          {activeTab === 'shortcuts'  && <ShortcutsView />}
+          {activeTab === 'shortcuts'  && <ShortcutsView onShutdownRequest={() => setShutdownConfirm(true)} />}
           {activeTab === 'library'    && <LibraryView />}
           {activeTab === 'settings'   && <PowerView />}
         </main>
       </div>
 
+      <ConfirmDialog
+        open={shutdownConfirm}
+        title="Shut down your PC?"
+        message="Your computer will shut down immediately."
+        confirmLabel="Shut Down"
+        onConfirm={() => {
+          setShutdownConfirm(false)
+          socketRef.current?.send(JSON.stringify({ type: 'shutdown' }))
+        }}
+        onCancel={() => setShutdownConfirm(false)}
+      />
       <ButtonToast
         buttonNum={toast?.btn ?? null}
         name={toast?.name ?? null}

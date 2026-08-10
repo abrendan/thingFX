@@ -19,11 +19,15 @@ const Shortcuts: React.FC = () => {
 
   const [shortcuts, setShortcuts] = useState<Shortcut[] | null>(null)
   const [showLock, setShowLock] = useState<boolean | null>(null)
+  const [showShutdown, setShowShutdown] = useState<boolean | null>(null)
 
   useEffect(() => {
     window.api
       .getStorageValue('showLockShortcut')
       .then(v => setShowLock(v === true))
+    window.api
+      .getStorageValue('showShutdownShortcut')
+      .then(v => setShowShutdown(v === true))
   }, [])
 
   // Editor state — covers both "add new" (editingId === null) and edit
@@ -151,6 +155,25 @@ const Shortcuts: React.FC = () => {
             onChange={value => {
               setShowLock(value)
               window.api.setStorageValue('showLockShortcut', value)
+            }}
+          />
+        </div>
+      )}
+
+      {showShutdown !== null && (
+        <div className={styles.lockToggle}>
+          <div>
+            <p className={styles.lockToggleLabel}>Show "Shut Down PC" shortcut</p>
+            <p className={styles.lockToggleDesc}>
+              Adds a tile to the Car Thing's app screen that shuts down this
+              computer. The Car Thing always asks for confirmation first.
+            </p>
+          </div>
+          <Switch
+            value={showShutdown}
+            onChange={value => {
+              setShowShutdown(value)
+              window.api.setStorageValue('showShutdownShortcut', value)
             }}
           />
         </div>

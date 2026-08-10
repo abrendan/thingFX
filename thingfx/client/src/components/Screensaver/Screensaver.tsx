@@ -2,7 +2,11 @@ import React, { useCallback, useContext, useEffect, useState } from 'react'
 
 import { SleepState } from '@/contexts/SleepContext.tsx'
 import { SocketContext } from '@/contexts/SocketContext.tsx'
-export type ScreensaverType = 'bubbles' | 'clock'
+export type ScreensaverType = 'bubbles' | 'clock' | 'aurora'
+
+export function normalizeScreensaverType(value: unknown): ScreensaverType {
+  return value === 'clock' || value === 'aurora' ? value : 'bubbles'
+}
 
 import styles from './Screensaver.module.css'
 
@@ -18,7 +22,7 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
   const [loaded, setLoaded] = useState(false)
   const [customImage, setCustomImage] = useState<string | null>(null)
   const [screensaverType, setScreensaverType] = useState<ScreensaverType>(() =>
-    (localStorage.getItem('lumi_screensaver_type') as ScreensaverType) ?? 'bubbles'
+    normalizeScreensaverType(localStorage.getItem('lumi_screensaver_type'))
   )
   const [serverClock, setServerClock] = useState<{ time: string; date: string } | null>(null)
   const [weather, setWeather] = useState<{ temp: number; unit: 'F' | 'C'; icon: string; condition: string; city: string } | null>(null)
@@ -135,7 +139,7 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
   useEffect(() => {
     if (type === 'screensaver') {
       setLoaded(true)
-      setScreensaverType((localStorage.getItem('lumi_screensaver_type') as ScreensaverType) ?? 'bubbles')
+      setScreensaverType(normalizeScreensaverType(localStorage.getItem('lumi_screensaver_type')))
     } else {
       setTimeout(() => {
         setLoaded(false)
@@ -153,8 +157,14 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
               className={styles.customImage}
               style={{ backgroundImage: `url(${customImage})` }}
             ></div>
-          ) : screensaverType === 'clock' ? (
+          ) : screensaverType === 'clock' || screensaverType === 'aurora' ? (
             <div className={styles.clockDisplay}>
+              {screensaverType === 'aurora' && (
+                <div className={styles.aurora} aria-hidden>
+                  <div className={styles.auroraRed} />
+                  <div className={styles.auroraBlue} />
+                </div>
+              )}
               <span className={styles.clockTime}>{serverClock?.time ?? '—'}</span>
               <div className={styles.clockDivider} />
               <span className={styles.clockDate}>{serverClock?.date ?? ''}</span>

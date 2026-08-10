@@ -166,6 +166,29 @@ export function getParsedPlatformCommand(command: string) {
   }
 }
 
+export function getShutdownPlatformCommand() {
+  const platform = process.platform
+
+  if (platform === 'darwin') {
+    return {
+      cmd: `osascript -e 'tell app "System Events" to shut down'`,
+      shell: '/bin/sh'
+    }
+  } else if (platform === 'win32') {
+    return {
+      cmd: 'shutdown /s /t 0',
+      shell: 'powershell.exe'
+    }
+  } else if (platform === 'linux') {
+    return {
+      cmd: 'systemctl poweroff',
+      shell: '/bin/sh'
+    }
+  } else {
+    return null
+  }
+}
+
 export function getLockPlatformCommand() {
   const platform = process.platform
 

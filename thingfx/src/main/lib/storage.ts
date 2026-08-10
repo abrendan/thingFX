@@ -55,6 +55,7 @@ const storageValueHandlers: Record<string, (value: unknown) => void> = {
   sleepTimer: value => broadcast('sleeptimer', value ?? '300'),
   launcherAutoReturn: value => broadcast('autoreturn', value !== false),
   showLockShortcut: value => broadcast('lockshortcut', value === true),
+  showShutdownShortcut: value => broadcast('shutdownshortcut', value === true),
   defaultView: value =>
     broadcast('defaultview', value === 'shortcuts' ? 'shortcuts' : 'nowplaying'),
   backButton: value =>

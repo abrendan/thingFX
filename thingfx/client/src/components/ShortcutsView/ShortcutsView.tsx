@@ -8,11 +8,16 @@ interface App {
   command?: string
 }
 
-const ShortcutsView: React.FC = () => {
+interface ShortcutsViewProps {
+  onShutdownRequest?: () => void
+}
+
+const ShortcutsView: React.FC<ShortcutsViewProps> = ({ onShutdownRequest }) => {
   const { ready, socket } = useContext(SocketContext)
   const [apps, setApps] = useState<App[] | null>(null)
   const [images, setImages] = useState<Record<string, string>>({})
   const [showLock, setShowLock] = useState(false)
+  const [showShutdown, setShowShutdown] = useState(false)
 
   function openApp(id: string) {
     socket?.send(JSON.stringify({ type: 'apps', action: 'open', data: id }))
@@ -31,6 +36,10 @@ const ShortcutsView: React.FC = () => {
         setShowLock(data === true)
         return
       }
+      if (type === 'shutdownshortcut') {
+        setShowShutdown(data === true)
+        return
+      }
       if (type !== 'apps') return
       if (action === 'image') {
         setImages(prev => ({ ...prev, [data.id]: data.image }))
@@ -45,12 +54,16 @@ const ShortcutsView: React.FC = () => {
     socket.addEventListener('message', listener)
     socket.send(JSON.stringify({ type: 'apps' }))
     socket.send(JSON.stringify({ type: 'lockshortcut' }))
+    socket.send(JSON.stringify({ type: 'shutdownshortcut' }))
 
     return () => socket.removeEventListener('message', listener)
   }, [ready, socket])
 
   // Size tiles dynamically: few shortcuts = big tiles filling the screen
-  const count = Math.max((apps?.length ?? 0) + (showLock ? 1 : 0), 1)
+  const count = Math.max(
+    (apps?.length ?? 0) + (showLock ? 1 : 0) + (showShutdown ? 1 : 0),
+    1
+  )
   const fill = apps !== null && count <= 8
   const cols = count <= 4 ? count : 4
   const rows = Math.ceil(count / cols)
@@ -98,6 +111,17 @@ const ShortcutsView: React.FC = () => {
           >
             <span className="material-icons">lock</span>
             <span className={styles.appLabel}>Lock</span>
+          </button>
+        )}
+
+        {showShutdown && (
+          <button
+            className={`${styles.appBtn} ${styles.lockBtn}`}
+            onClick={() => onShutdownRequest?.()}
+            aria-label="Shut Down"
+          >
+            <span className="material-icons">power_settings_new</span>
+            <span className={styles.appLabel}>Shut Down</span>
           </button>
         )}
       </div>
