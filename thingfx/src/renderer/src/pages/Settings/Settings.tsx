@@ -895,7 +895,8 @@ const AppearanceTab: React.FC = () => {
           description="What turning the Car Thing wheel does on the player screen."
           value={wheelMode}
           options={[
-            { value: 'volume', label: 'Volume' },
+            { value: 'volume', label: 'Volume (music player)' },
+            { value: 'volume-native', label: 'Volume (system / Windows)' },
             { value: 'scrub', label: 'Scrub through song' }
           ]}
           onChange={value => {

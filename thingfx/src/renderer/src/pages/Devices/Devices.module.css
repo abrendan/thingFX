@@ -1,0 +1,171 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 18px 22px 14px;
+  overflow-y: auto;
+  gap: 12px;
+}
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pageHeader h2 {
+  color: var(--text);
+}
+
+.pageDesc {
+  font-size: 13px;
+  color: rgba(var(--fg-rgb), 0.45);
+  margin-top: -6px;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 40px 0;
+  color: rgba(var(--fg-rgb), 0.5);
+  font-size: 14px;
+}
+
+.empty .material-icons {
+  font-size: 40px;
+  color: rgba(var(--fg-rgb), 0.3);
+}
+
+.hint {
+  font-size: 12px;
+  color: rgba(var(--fg-rgb), 0.35);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(var(--fg-rgb), 0.05);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stateDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.titleBlock {
+  flex: 1;
+  min-width: 0;
+}
+
+.deviceName {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.deviceMeta {
+  font-size: 12px;
+  color: rgba(var(--fg-rgb), 0.45);
+  margin-top: 2px;
+}
+
+.iconBtn {
+  all: unset;
+  cursor: pointer;
+  display: inline-flex;
+  color: rgba(var(--fg-rgb), 0.4);
+}
+
+.iconBtn:hover {
+  color: var(--text);
+}
+
+.iconBtn .material-icons {
+  font-size: 16px;
+}
+
+.nameInput {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  background: rgba(var(--fg-rgb), 0.08);
+  border: 1px solid rgba(var(--fg-rgb), 0.2);
+  border-radius: 8px;
+  padding: 4px 8px;
+  outline: none;
+  width: 240px;
+}
+
+.cardActions {
+  display: flex;
+  gap: 8px;
+}
+
+.actionBtn {
+  all: unset;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  background: rgba(var(--accent-color-rgb), 0.14);
+  border: 1px solid rgba(var(--accent-color-rgb), 0.3);
+}
+
+.actionBtn .material-icons {
+  font-size: 16px;
+}
+
+.danger {
+  color: #d64545;
+  background: rgba(214, 69, 69, 0.12);
+  border-color: rgba(214, 69, 69, 0.3);
+}
+
+.overrides {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+}
+
+.overrideRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.overrideLabel {
+  font-size: 13px;
+  color: rgba(var(--fg-rgb), 0.7);
+}
+
+.select {
+  background: rgba(var(--fg-rgb), 0.08);
+  color: var(--text);
+  border: 1px solid rgba(var(--fg-rgb), 0.15);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 13px;
+  max-width: 200px;
+}

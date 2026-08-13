@@ -12,6 +12,8 @@ import * as backbutton from './backbutton.js'
 import * as visualizer from './visualizer.js'
 import * as wheelmode from './wheelmode.js'
 import * as holdtolock from './holdtolock.js'
+import * as identify from './identify.js'
+import * as sysvolume from './sysvolume.js'
 import * as sleeptimer from './sleeptimer.js'
 import * as autoreturn from './autoreturn.js'
 import * as lockshortcut from './lockshortcut.js'
@@ -44,6 +46,8 @@ export const handlers: Handler[] = [
   visualizer,
   wheelmode,
   holdtolock,
+  identify,
+  sysvolume,
   sleeptimer,
   autoreturn,
   lockshortcut,

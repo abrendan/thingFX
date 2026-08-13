@@ -17,7 +17,7 @@ function formatMs(ms: number) {
 interface NowPlayingProps {
   showVisualizer?: boolean
   bgStyle?: BgStyle
-  wheelMode?: 'volume' | 'scrub'
+  wheelMode?: 'volume' | 'scrub' | 'volume-native'
 }
 
 const NowPlaying: React.FC<NowPlayingProps> = ({ showVisualizer = true, bgStyle = 'full', wheelMode = 'volume' }) => {
@@ -138,6 +138,13 @@ const NowPlaying: React.FC<NowPlayingProps> = ({ showVisualizer = true, bgStyle 
       if (wheelMode === 'scrub') {
         if (e.deltaX < 0) scrub(-1)
         else if (e.deltaX > 0) scrub(1)
+        return
+      }
+      if (wheelMode === 'volume-native') {
+        // Adjust the PC's system volume instead of the player's
+        const direction = e.deltaX < 0 ? 'down' : e.deltaX > 0 ? 'up' : null
+        if (direction)
+          socket?.send(JSON.stringify({ type: 'sysvolume', data: direction }))
         return
       }
       if (e.deltaX < 0) volumeDown()

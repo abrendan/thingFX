@@ -17,6 +17,7 @@ const Sidebar: React.FC = () => {
   const navItems = [
     { id: 'home', icon: 'home', label: 'Home', action: () => { navigate('/'); setModalOpen('developer', false) }, isActive: location.pathname === '/' && openModals.length === 0 },
     { id: 'shortcuts', icon: 'apps', label: 'Shortcuts', action: () => { navigate('/shortcuts'); setModalOpen('developer', false) }, isActive: location.pathname === '/shortcuts' && openModals.length === 0 },
+    { id: 'devices', icon: 'devices', label: 'Devices', action: () => { navigate('/devices'); setModalOpen('developer', false) }, isActive: location.pathname === '/devices' && openModals.length === 0 },
     { id: 'settings', icon: 'tune', label: 'Settings', action: () => { navigate('/settings'); setModalOpen('developer', false) }, isActive: location.pathname === '/settings' && openModals.length === 0 },
     ...(devMode ? [{ id: 'developer', icon: 'code', label: 'Developer', action: () => setModalOpen('developer', !openModals.includes('developer')), isActive: openModals.includes('developer') }] : []),
   ]

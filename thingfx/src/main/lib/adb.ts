@@ -143,33 +143,43 @@ async function checkValidDevice(device: string) {
   return !res.includes('No such file or directory')
 }
 
-let carThingFound = false
+let lastFoundCount = 0
 
-export async function findCarThing() {
-  log('Finding CarThing...', 'adb', LogLevel.DEBUG)
+// Returns ALL connected, valid CarThing serials.
+export async function findCarThings(): Promise<string[]> {
+  log('Finding CarThings...', 'adb', LogLevel.DEBUG)
   const logLevel = getLogLevel()
   const devices = await getDevices()
 
+  const found: string[] = []
   for (const device of devices) {
-    if (await checkValidDevice(device)) {
-      if (logLevel === LogLevel.DEBUG)
-        log(`Found CarThing: ${device}`, 'adb', LogLevel.DEBUG)
-      else if (!carThingFound) {
-        log(`Found CarThing: ${device}`, 'adb')
-        carThingFound = true
-      }
-      return device
-    }
+    if (await checkValidDevice(device)) found.push(device)
   }
 
-  if (logLevel === LogLevel.DEBUG)
-    log('No valid CarThing found', 'adb', LogLevel.DEBUG)
-  else if (carThingFound) {
-    log('CarThing no longer found', 'adb', LogLevel.WARN)
-    carThingFound = false
+  if (logLevel === LogLevel.DEBUG) {
+    log(
+      found.length > 0
+        ? `Found CarThing(s): ${found.join(', ')}`
+        : 'No valid CarThing found',
+      'adb',
+      LogLevel.DEBUG
+    )
+  } else if (found.length !== lastFoundCount) {
+    if (found.length > lastFoundCount)
+      log(`Found CarThing(s): ${found.join(', ')}`, 'adb')
+    else if (found.length === 0)
+      log('CarThing no longer found', 'adb', LogLevel.WARN)
+    else log(`A CarThing disconnected, ${found.length} remaining`, 'adb', LogLevel.WARN)
+    lastFoundCount = found.length
   }
 
-  return null
+  return found
+}
+
+// Back-compat: first valid CarThing (or null)
+export async function findCarThing() {
+  const devices = await findCarThings()
+  return devices[0] ?? null
 }
 
 async function restartChromium(device: string | null) {
@@ -325,6 +335,11 @@ async function installAppInner(device: string | null) {
   )
   await execAsync(
     `${adb} -s ${device} shell "touch /tmp/webapp/.glancething"`
+  )
+  // Give the client its own serial so it can identify itself to the
+  // desktop app (used for per-device profiles)
+  await execAsync(
+    `${adb} -s ${device} shell "echo ${device} > /tmp/webapp/device-serial"`
   )
   await execAsync(
     `${adb} -s ${device} shell "mount --bind /tmp/webapp /usr/share/qt-superbird-app/webapp"`

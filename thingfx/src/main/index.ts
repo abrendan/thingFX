@@ -41,6 +41,7 @@ import {
 } from './lib/utils.js'
 import {
   findCarThing,
+  findCarThings,
   rebootCarThing,
   installApp,
   checkInstalledApp,
@@ -52,6 +53,15 @@ import {
   setAutoBrightness,
   restore
 } from './lib/adb.js'
+import {
+  getDeviceList,
+  updateDeviceProfile,
+  removeDeviceProfile,
+  refreshDeviceSettings,
+  registerDevice,
+  setDeviceState,
+  syncConnectedDevices
+} from './lib/devices.js'
 import {
   getShortcuts,
   addShortcut,
@@ -283,7 +293,10 @@ enum IPCHandler {
   FindOpenPort = 'findOpenPort',
   IsPortOpen = 'isPortOpen',
   SaveShortcutIconFromDataUrl = 'saveShortcutIconFromDataUrl',
-  RefreshWeather = 'refreshWeather'
+  RefreshWeather = 'refreshWeather',
+  GetDevices = 'getDevices',
+  SetDeviceProfile = 'setDeviceProfile',
+  ForgetDevice = 'forgetDevice'
 }
 
 async function setupIpcHandlers() {
@@ -303,8 +316,8 @@ async function setupIpcHandlers() {
     return 'ready'
   })
 
-  ipcMain.handle(IPCHandler.RebootCarThing, async () => {
-    await rebootCarThing(null)
+  ipcMain.handle(IPCHandler.RebootCarThing, async (_event, serial?: string) => {
+    await rebootCarThing(serial ?? null)
   })
 
   ipcMain.handle(IPCHandler.RestoreCarThing, async () => {
@@ -312,8 +325,9 @@ async function setupIpcHandlers() {
   })
 
   ipcMain.handle(IPCHandler.InstallApp, async () => {
-    lastInstallTime = Date.now()
-    const res = await installApp(null).catch(err => ({ err }))
+    const target = await findCarThing().catch(() => null)
+    if (target) lastInstallTimes.set(target, Date.now())
+    const res = await installApp(target).catch(err => ({ err }))
     if (res && typeof res === 'object' && 'err' in res)
       return res.err.message
     await recordInstalledClient()
@@ -358,7 +372,8 @@ async function setupIpcHandlers() {
     return setStorageValue(key, value)
   })
 
-  let lastInstallTime = 0
+  // Per-device install cooldowns (keyed by ADB serial)
+  const lastInstallTimes = new Map<string, number>()
 
   // Record which client build is on the device — call only after a
   // successful install.
@@ -367,87 +382,119 @@ async function setupIpcHandlers() {
     setStorageValue('lastInstalledClientBuild', await getClientBuildId())
   }
 
+  // Handles one connected device; returns its resulting state
+  async function updateSingleDevice(
+    found: string
+  ): Promise<'not_installed' | 'installing' | 'ready'> {
+    const lastVersion = getStorageValue('lastInstalledClientVersion')
+    const willAutoInstall = getStorageValue('installAutomatically')
+    const cooldownElapsed =
+      Date.now() - (lastInstallTimes.get(found) ?? 0) > 60000
+
+    if (!lastVersion) {
+      // Never been installed anywhere — auto-install once
+      if (willAutoInstall && cooldownElapsed) {
+        lastInstallTimes.set(found, Date.now())
+        setDeviceState(found, 'installing')
+        mainWindow?.webContents.send('carThingState', 'installing')
+        await installApp(found)
+        await recordInstalledClient()
+      } else {
+        return 'not_installed'
+      }
+    } else if (willAutoInstall && cooldownElapsed) {
+      // Reinstall when the client is missing from this device (e.g.
+      // after a reflash, or a second device that never got the app) or
+      // an update is pending.
+      const appMissing = await checkInstalledApp(found).then(
+        v => !v,
+        () => false
+      )
+      const bundledBuild = await getClientBuildId()
+      const updatePending =
+        lastVersion !== app.getVersion() ||
+        (!!bundledBuild &&
+          getStorageValue('lastInstalledClientBuild') !== bundledBuild)
+
+      if (appMissing || updatePending) {
+        lastInstallTimes.set(found, Date.now())
+        setDeviceState(found, 'installing')
+        mainWindow?.webContents.send('carThingState', 'installing')
+        try {
+          await installApp(found)
+          if (updatePending) await recordInstalledClient()
+        } catch (err) {
+          log(
+            `Auto-reinstall failed on ${found}: ${(err as Error).message}`,
+            'CarThingState',
+            LogLevel.ERROR
+          )
+          if (appMissing) {
+            // Device has no client at all and the install failed —
+            // don't pretend it's ready
+            return 'not_installed'
+          }
+        }
+      }
+    }
+
+    await forwardSocketServer(found)
+
+    const autoBrightness = getStorageValue('autoBrightness') ?? true
+    if ((await getAutoBrightness(found)) !== autoBrightness)
+      setAutoBrightness(found, autoBrightness)
+
+    if (!autoBrightness) {
+      const brightness = getStorageValue('brightness') ?? 0.5
+      if ((await getBrightness(found)) !== brightness)
+        setBrightnessSmooth(found, brightness)
+    }
+
+    return 'ready'
+  }
+
   async function carThingStateUpdate() {
-    const found = await findCarThing().catch(err => {
+    const devices = await findCarThings().catch(err => {
       log(
         `Got an error while finding CarThing: ${err.message}`,
         'CarThingState',
         LogLevel.ERROR
       )
-      return null
+      return [] as string[]
     })
 
-    if (found) {
-      const lastVersion = getStorageValue('lastInstalledClientVersion')
+    syncConnectedDevices(devices)
 
-      if (!lastVersion) {
-        // Never been installed — auto-install once
-        const willAutoInstall = getStorageValue('installAutomatically')
-        const cooldownElapsed = Date.now() - lastInstallTime > 60000
-        if (willAutoInstall && cooldownElapsed) {
-          lastInstallTime = Date.now()
-          mainWindow?.webContents.send('carThingState', 'installing')
-          await installApp(found)
-          await recordInstalledClient()
-        } else {
-          mainWindow?.webContents.send('carThingState', 'not_installed')
-        }
-      } else {
-        // Already installed — if auto-install is on, reinstall when the
-        // client is missing from the device (e.g. after a reflash) or an
-        // update is pending; otherwise mark ready.
-        const willAutoInstall = getStorageValue('installAutomatically')
-        const cooldownElapsed = Date.now() - lastInstallTime > 60000
-
-        if (willAutoInstall && cooldownElapsed) {
-          const appMissing = await checkInstalledApp(found).then(
-            v => !v,
-            () => false
-          )
-          const bundledBuild = await getClientBuildId()
-          const updatePending =
-            lastVersion !== app.getVersion() ||
-            (!!bundledBuild &&
-              getStorageValue('lastInstalledClientBuild') !== bundledBuild)
-
-          if (appMissing || updatePending) {
-            lastInstallTime = Date.now()
-            mainWindow?.webContents.send('carThingState', 'installing')
-            try {
-              await installApp(found)
-              await recordInstalledClient()
-            } catch (err) {
-              log(
-                `Auto-reinstall failed: ${(err as Error).message}`,
-                'CarThingState',
-                LogLevel.ERROR
-              )
-              if (appMissing) {
-                // Device has no client at all and the install failed —
-                // don't pretend it's ready
-                mainWindow?.webContents.send('carThingState', 'not_installed')
-                return
-              }
-            }
-          }
-        }
-
-        mainWindow?.webContents.send('carThingState', 'ready')
-        await forwardSocketServer(found)
-
-        const autoBrightness = getStorageValue('autoBrightness') ?? true
-        if ((await getAutoBrightness(found)) !== autoBrightness)
-          setAutoBrightness(found, autoBrightness)
-
-        if (!autoBrightness) {
-          const brightness = getStorageValue('brightness') ?? 0.5
-          if ((await getBrightness(found)) !== brightness)
-            setBrightnessSmooth(found, brightness)
-        }
+    const states: string[] = []
+    for (const found of devices) {
+      try {
+        const state = await updateSingleDevice(found)
+        setDeviceState(found, state)
+        registerDevice(found)
+        states.push(state)
+      } catch (err) {
+        log(
+          `Error updating device ${found}: ${(err as Error).message}`,
+          'CarThingState',
+          LogLevel.ERROR
+        )
+        setDeviceState(found, 'not_installed')
+        states.push('not_installed')
       }
-    } else {
-      mainWindow?.webContents.send('carThingState', 'not_found')
     }
+
+    // Aggregate state for the Home page: best state wins
+    const aggregate =
+      states.length === 0
+        ? 'not_found'
+        : states.includes('ready')
+          ? 'ready'
+          : states.includes('installing')
+            ? 'installing'
+            : 'not_installed'
+
+    mainWindow?.webContents.send('carThingState', aggregate)
+    mainWindow?.webContents.send('devicesUpdated', getDeviceList())
   }
 
   async function interval() {
@@ -666,6 +713,26 @@ async function setupIpcHandlers() {
 
   ipcMain.handle(IPCHandler.RefreshWeather, async () => {
     return await fetchAndBroadcastWeather()
+  })
+
+  ipcMain.handle(IPCHandler.GetDevices, async () => {
+    return getDeviceList()
+  })
+
+  ipcMain.handle(
+    IPCHandler.SetDeviceProfile,
+    async (_event, serial: string, patch: Record<string, unknown>) => {
+      if (typeof serial !== 'string' || !serial) return
+      updateDeviceProfile(serial, patch)
+      refreshDeviceSettings(serial)
+      return getDeviceList()
+    }
+  )
+
+  ipcMain.handle(IPCHandler.ForgetDevice, async (_event, serial: string) => {
+    if (typeof serial !== 'string' || !serial) return
+    removeDeviceProfile(serial)
+    return getDeviceList()
   })
 }
 

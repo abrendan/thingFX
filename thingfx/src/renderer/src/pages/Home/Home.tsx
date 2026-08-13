@@ -9,7 +9,7 @@ const settingLabels: Record<string, { label: string; map?: Record<string, string
   bgStyle: { label: 'Background', map: { full: 'Full', thumbnail: 'Thumbnail (small)', 'thumbnail-blur': 'Thumbnail (blurred background)', 'thumbnail-lg': 'Thumbnail (large)' } },
   orientation: { label: 'Orientation', map: { landscape: 'Landscape', 'portrait-left': 'Portrait (left)', 'portrait-right': 'Portrait (right)' } },
   visualizerSize: { label: 'Visualizer', map: { normal: 'Normal', large: 'Large', xl: 'XL' } },
-  wheelMode: { label: 'Wheel', map: { volume: 'Volume', scrub: 'Scrub' } },
+  wheelMode: { label: 'Wheel', map: { volume: 'Volume (player)', 'volume-native': 'Volume (system)', scrub: 'Scrub' } },
   sleepTimer: { label: 'Sleep timer', map: { '0': 'Off', '60': '1 minute', '300': '5 minutes', '600': '10 minutes' } }
 }
 

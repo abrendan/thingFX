@@ -60,7 +60,7 @@ const App: React.FC = () => {
   const backPrimaryRef = useRef<'shortcuts' | 'library'>('shortcuts')
   backPrimaryRef.current = backPrimary
   const [visualizerOn, setVisualizerOn] = useState(true)
-  const [wheelMode, setWheelMode] = useState<'volume' | 'scrub'>('volume')
+  const [wheelMode, setWheelMode] = useState<'volume' | 'scrub' | 'volume-native'>('volume')
   const holdToLockRef = useRef(false)
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const holdFiredRef = useRef(false)
@@ -123,7 +123,7 @@ const App: React.FC = () => {
       } else if (type === 'theme') {
         setClientTheme(normalizeTheme(data))
       } else if (type === 'wheelmode') {
-        setWheelMode(data === 'scrub' ? 'scrub' : 'volume')
+        setWheelMode(data === 'scrub' || data === 'volume-native' ? data : 'volume')
       } else if (type === 'sleeptimer') {
         setSleepTimer(typeof data === 'string' ? data : '300')
       } else if (type === 'autoreturn') {

@@ -17,6 +17,17 @@ export async function getSocketPassword() {
   return res.data.replace('\n', '')
 }
 
+// The device's own ADB serial, pushed at install time. Used to identify
+// this CarThing to the desktop app for per-device profiles.
+export async function getDeviceSerial() {
+  try {
+    const res = await axios.get('./device-serial')
+    return String(res.data).trim() || null
+  } catch {
+    return null
+  }
+}
+
 export function formatTime(ms: number) {
   const seconds = Math.floor(ms / 1000)
   const minutes = Math.floor(seconds / 60)

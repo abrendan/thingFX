@@ -1,6 +1,6 @@
 import React, { createContext, useEffect, useRef, useState } from 'react'
 
-import { getSocketPassword } from '@/lib/utils.ts'
+import { getDeviceSerial, getSocketPassword } from '@/lib/utils.ts'
 
 interface SocketContextProps {
   ready: boolean
@@ -48,6 +48,15 @@ const SocketContextProvider = ({
           JSON.stringify({
             type: 'auth',
             data: pass
+          })
+        )
+      // Identify this device so the desktop app can apply its profile
+      const serial = await getDeviceSerial()
+      if (serial)
+        ws.current?.send(
+          JSON.stringify({
+            type: 'identify',
+            data: serial
           })
         )
       setReady(true)

@@ -189,6 +189,34 @@ export function getShutdownPlatformCommand() {
   }
 }
 
+// Adjust the OS-level output volume by one step. On Windows this taps
+// the virtual volume keys (2 units per tap), matching the volume OSD.
+export function getSystemVolumeStepCommand(direction: 'up' | 'down') {
+  const platform = process.platform
+
+  if (platform === 'win32') {
+    const key = direction === 'up' ? 175 : 174
+    return {
+      cmd: `(new-object -ComObject WScript.Shell).SendKeys([char]${key})`,
+      shell: 'powershell.exe'
+    }
+  } else if (platform === 'darwin') {
+    const delta = direction === 'up' ? 6 : -6
+    return {
+      cmd: `osascript -e 'set volume output volume ((output volume of (get volume settings)) + ${delta})'`,
+      shell: '/bin/sh'
+    }
+  } else if (platform === 'linux') {
+    const sign = direction === 'up' ? '+' : '-'
+    return {
+      cmd: `pactl set-sink-volume @DEFAULT_SINK@ ${sign}5% || amixer -q sset Master 5%${sign}`,
+      shell: '/bin/sh'
+    }
+  } else {
+    return null
+  }
+}
+
 export function getLockPlatformCommand() {
   const platform = process.platform
 

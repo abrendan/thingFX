@@ -57,7 +57,10 @@ enum IPCHandler {
   FindOpenPort = 'findOpenPort',
   IsPortOpen = 'isPortOpen',
   SaveShortcutIconFromDataUrl = 'saveShortcutIconFromDataUrl',
-  RefreshWeather = 'refreshWeather'
+  RefreshWeather = 'refreshWeather',
+  GetDevices = 'getDevices',
+  SetDeviceProfile = 'setDeviceProfile',
+  ForgetDevice = 'forgetDevice'
 }
 
 // Custom APIs for renderer
@@ -71,7 +74,13 @@ const api = {
   findCarThing: () => ipcRenderer.invoke(IPCHandler.FindCarThing),
   findSetupCarThing: () =>
     ipcRenderer.invoke(IPCHandler.FindSetupCarThing),
-  rebootCarThing: () => ipcRenderer.invoke(IPCHandler.RebootCarThing),
+  rebootCarThing: (serial?: string) =>
+    ipcRenderer.invoke(IPCHandler.RebootCarThing, serial),
+  getDevices: () => ipcRenderer.invoke(IPCHandler.GetDevices),
+  setDeviceProfile: (serial: string, patch: Record<string, unknown>) =>
+    ipcRenderer.invoke(IPCHandler.SetDeviceProfile, serial, patch),
+  forgetDevice: (serial: string) =>
+    ipcRenderer.invoke(IPCHandler.ForgetDevice, serial),
   restoreCarThing: () => ipcRenderer.invoke(IPCHandler.RestoreCarThing),
   installApp: () => ipcRenderer.invoke(IPCHandler.InstallApp),
   startServer: () => ipcRenderer.invoke(IPCHandler.StartServer),

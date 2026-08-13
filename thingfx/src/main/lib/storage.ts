@@ -13,6 +13,7 @@ import {
 } from './utils.js'
 
 import { setAutoBrightness, setBrightnessSmooth } from './adb.js'
+import { broadcastPerDeviceSetting } from './devices.js'
 import { fetchAndBroadcastWeather } from './weather.js'
 import { serverManager } from './server.js'
 import { updateTime } from './time.js'
@@ -42,22 +43,29 @@ const storageValueHandlers: Record<string, (value: unknown) => void> = {
   brightness: async value => {
     await setBrightnessSmooth(null, value as number)
   },
-  bgStyle: value => broadcast('bgstyle', value),
+  // Per-device-capable settings: devices with a profile override for the
+  // key keep their override; everyone else gets the new global value.
+  bgStyle: () =>
+    broadcastPerDeviceSetting('bgStyle', 'bgstyle', v => v ?? 'full'),
   accentColor: value => broadcast('accent', (value as string) || null),
-  clientTheme: value =>
-    broadcast(
-      'theme',
-      value === 'light' || value === 'glassy' || value === 'aero' ? value : 'dark'
+  clientTheme: () =>
+    broadcastPerDeviceSetting('clientTheme', 'theme', v =>
+      v === 'light' || v === 'glassy' || v === 'aero' ? v : 'dark'
     ),
   visualizer: value => broadcast('visualizer', value !== false),
-  wheelMode: value => broadcast('wheelmode', value === 'scrub' ? 'scrub' : 'volume'),
+  wheelMode: () =>
+    broadcastPerDeviceSetting('wheelMode', 'wheelmode', v =>
+      v === 'scrub' || v === 'volume-native' ? v : 'volume'
+    ),
   holdToLock: value => broadcast('holdtolock', value === true),
   sleepTimer: value => broadcast('sleeptimer', value ?? '300'),
   launcherAutoReturn: value => broadcast('autoreturn', value !== false),
   showLockShortcut: value => broadcast('lockshortcut', value === true),
   showShutdownShortcut: value => broadcast('shutdownshortcut', value === true),
-  defaultView: value =>
-    broadcast('defaultview', value === 'shortcuts' ? 'shortcuts' : 'nowplaying'),
+  defaultView: () =>
+    broadcastPerDeviceSetting('defaultView', 'defaultview', v =>
+      v === 'shortcuts' ? 'shortcuts' : 'nowplaying'
+    ),
   backButton: value =>
     broadcast('backbutton', value === 'library' ? 'library' : 'shortcuts'),
   visualizerSize: value =>

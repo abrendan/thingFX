@@ -5,6 +5,15 @@ interface Shortcut {
   command: string
 }
 
+interface DeviceInfo {
+  serial: string
+  name: string
+  state: 'not_installed' | 'installing' | 'ready' | 'disconnected'
+  firstSeen?: number
+  lastSeen?: number
+  overrides: Record<string, string | undefined>
+}
+
 declare global {
   interface Window {
     api: {
@@ -16,7 +25,16 @@ declare global {
       findSetupCarThing: () => Promise<
         'not_found' | 'not_installed' | 'ready'
       >
-      rebootCarThing: () => Promise<void>
+      rebootCarThing: (serial?: string) => Promise<void>
+      getDevices: () => Promise<DeviceInfo[]>
+      setDeviceProfile: (
+        serial: string,
+        patch: {
+          name?: string
+          overrides?: Record<string, string | undefined>
+        }
+      ) => Promise<DeviceInfo[]>
+      forgetDevice: (serial: string) => Promise<DeviceInfo[]>
       restoreCarThing: () => Promise<void>
       installApp: () => Promise<string | true>
       startServer: () => Promise<void>

@@ -1,5 +1,5 @@
 import { HandlerFunction } from '../../types/WebSocketHandler.js'
-import { getStorageValue } from '../storage.js'
+import { resolveDeviceSetting } from '../devices.js'
 
 export const name = 'defaultview'
 
@@ -10,7 +10,7 @@ export const handle: HandlerFunction = async ws => {
     JSON.stringify({
       type: 'defaultview',
       data:
-        getStorageValue('defaultView') === 'shortcuts'
+        resolveDeviceSetting(ws.deviceSerial, 'defaultView') === 'shortcuts'
           ? 'shortcuts'
           : 'nowplaying'
     })
