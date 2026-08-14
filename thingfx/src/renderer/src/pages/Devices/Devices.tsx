@@ -46,6 +46,24 @@ const overrideFields: {
     ]
   },
   {
+    key: 'sleepTimer',
+    label: 'Sleep timer',
+    options: [
+      { value: '0', label: 'Off' },
+      { value: '60', label: '1 minute' },
+      { value: '300', label: '5 minutes' },
+      { value: '600', label: '10 minutes' }
+    ]
+  },
+  {
+    key: 'backButton',
+    label: 'Back button opens',
+    options: [
+      { value: 'shortcuts', label: 'App launcher' },
+      { value: 'library', label: 'Library' }
+    ]
+  },
+  {
     key: 'clientTheme',
     label: 'Theme',
     options: [

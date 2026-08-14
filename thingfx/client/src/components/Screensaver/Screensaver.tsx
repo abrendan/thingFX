@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react'
 
 import { SleepState } from '@/contexts/SleepContext.tsx'
 import { SocketContext } from '@/contexts/SocketContext.tsx'
@@ -75,6 +75,12 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
     }
   }, [socket])
 
+  // Ref mirror so the socket effect below doesn't depend on customImage —
+  // re-running it on every image change caused a request loop with
+  // multi-image folders (each response triggered the next request).
+  const customImageRef = useRef<string | null>(null)
+  customImageRef.current = customImage
+
   useEffect(() => {
     if (!ready || !socket) return
 
@@ -125,7 +131,7 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
     socket.send(JSON.stringify({ type: 'weather' }))
 
     const retryInterval = setInterval(() => {
-      if (!customImage && socket.readyState === 1) {
+      if (!customImageRef.current && socket.readyState === 1) {
         requestImage()
       }
     }, 5000)
@@ -134,7 +140,16 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
       socket.removeEventListener('message', listener)
       clearInterval(retryInterval)
     }
-  }, [ready, socket, customImage, requestImage, validateImage])
+  }, [ready, socket, requestImage, validateImage])
+
+  // While the screensaver is showing a custom image, periodically ask the
+  // server for another one — with a picture folder configured it returns a
+  // different random image each time.
+  useEffect(() => {
+    if (type !== 'screensaver' || !customImage) return
+    const rotate = setInterval(requestImage, 60000)
+    return () => clearInterval(rotate)
+  }, [type, customImage, requestImage])
 
   useEffect(() => {
     if (type === 'screensaver') {

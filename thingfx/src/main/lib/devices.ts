@@ -10,7 +10,9 @@ export const PER_DEVICE_KEYS = [
   'defaultView',
   'wheelMode',
   'clientTheme',
-  'bgStyle'
+  'bgStyle',
+  'sleepTimer',
+  'backButton'
 ] as const
 
 export type PerDeviceKey = (typeof PER_DEVICE_KEYS)[number]
@@ -224,6 +226,10 @@ export function pushDeviceSettings(ws: AuthenticatedWebSocket) {
       : 'dark'
   )
   send('bgstyle', resolveDeviceSetting(serial, 'bgStyle') ?? 'full')
+  const timer = resolveDeviceSetting(serial, 'sleepTimer')
+  send('sleeptimer', typeof timer === 'string' ? timer : '300')
+  const back = resolveDeviceSetting(serial, 'backButton')
+  send('backbutton', back === 'library' ? 'library' : 'shortcuts')
 }
 
 // After a profile change, re-push resolved settings to that device's

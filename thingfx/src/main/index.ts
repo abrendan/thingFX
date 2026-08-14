@@ -86,7 +86,10 @@ import { fetchAndBroadcastWeather } from './lib/weather.js'
 import {
   uploadScreensaverImage,
   removeScreensaverImage,
-  hasCustomScreensaverImage
+  hasCustomScreensaverImage,
+  chooseScreensaverFolder,
+  removeScreensaverFolder,
+  getScreensaverFolder
 } from './lib/screensaver.js'
 
 import { playbackManager } from './lib/playback/playback.js'
@@ -284,6 +287,9 @@ enum IPCHandler {
   UploadScreensaverImage = 'uploadScreensaverImage',
   RemoveScreensaverImage = 'removeScreensaverImage',
   HasCustomScreensaverImage = 'hasCustomScreensaverImage',
+  ChooseScreensaverFolder = 'chooseScreensaverFolder',
+  RemoveScreensaverFolder = 'removeScreensaverFolder',
+  GetScreensaverFolder = 'getScreensaverFolder',
   OpenDevTools = 'openDevTools',
   GetChannel = 'getChannel',
   CheckUpdate = 'checkUpdate',
@@ -665,6 +671,18 @@ async function setupIpcHandlers() {
 
   ipcMain.handle(IPCHandler.HasCustomScreensaverImage, async () => {
     return hasCustomScreensaverImage()
+  })
+
+  ipcMain.handle(IPCHandler.ChooseScreensaverFolder, async () => {
+    return await chooseScreensaverFolder()
+  })
+
+  ipcMain.handle(IPCHandler.RemoveScreensaverFolder, async () => {
+    return removeScreensaverFolder()
+  })
+
+  ipcMain.handle(IPCHandler.GetScreensaverFolder, async () => {
+    return getScreensaverFolder()
   })
 
   ipcMain.handle(IPCHandler.OpenDevTools, () => {

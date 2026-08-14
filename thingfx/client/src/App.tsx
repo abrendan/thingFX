@@ -100,6 +100,12 @@ const App: React.FC = () => {
 
   const actionsRef = useRef(actions)
   const socketRef = useRef(socket)
+  const playerDataRef = useRef(playerData)
+  playerDataRef.current = playerData
+  const wheelVolumeRef = useRef(playerData?.volume ?? 0)
+  const lastWheelVolumeChange = useRef(0)
+  const blurredRef = useRef(blurred)
+  blurredRef.current = blurred
   const sleepTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastImageRef = useRef<string | null>(null)
   const lastEscapeRef = useRef<number>(0)
@@ -271,6 +277,59 @@ const App: React.FC = () => {
       events.forEach(e => document.removeEventListener(e, arm))
     }
   }, [sleepTimer, ready, playerData?.isPlaying, sleepState, setSleepState])
+
+  // Keep the launcher wheel's volume in sync with the server unless the
+  // user just changed it
+  useEffect(() => {
+    if (!playerData) return
+    if (lastWheelVolumeChange.current < Date.now() - 1000)
+      wheelVolumeRef.current = playerData.volume
+  }, [playerData])
+
+  // The dial keeps doing its configured job on the app launcher (e.g. when
+  // it's the main screen). Now Playing has its own richer wheel handling,
+  // Library scrolls natively, and the Menu overlay owns the wheel while
+  // open (it blurs the app), so this only runs on the launcher tab.
+  useEffect(() => {
+    if (activeTab !== 'shortcuts') return
+
+    const listener = (e: globalThis.WheelEvent) => {
+      if (blurredRef.current) return
+      const dir = e.deltaX < 0 ? -1 : e.deltaX > 0 ? 1 : 0
+      if (!dir) return
+      e.preventDefault()
+
+      if (wheelMode === 'volume-native') {
+        socketRef.current?.send(
+          JSON.stringify({ type: 'sysvolume', data: dir < 0 ? 'down' : 'up' })
+        )
+        return
+      }
+
+      const pd = playerDataRef.current
+      if (!pd) return
+
+      if (wheelMode === 'scrub') {
+        if (!pd.supportedActions.includes('seek')) return
+        const { current, total } = pd.track.duration
+        if (total <= 0) return
+        actionsRef.current.seek(
+          Math.max(0, Math.min(current + dir * 5000, total))
+        )
+        return
+      }
+
+      if (!pd.supportedActions.includes('volume')) return
+      const next = Math.max(0, Math.min(wheelVolumeRef.current + dir * 10, 100))
+      if (next === wheelVolumeRef.current) return
+      wheelVolumeRef.current = next
+      lastWheelVolumeChange.current = Date.now()
+      actionsRef.current.setVolume(next)
+    }
+
+    document.addEventListener('wheel', listener, { passive: false })
+    return () => document.removeEventListener('wheel', listener)
+  }, [activeTab, wheelMode])
 
   // Auto-return to the main screen after 1 minute without input
   useEffect(() => {

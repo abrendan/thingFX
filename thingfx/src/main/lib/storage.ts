@@ -58,7 +58,10 @@ const storageValueHandlers: Record<string, (value: unknown) => void> = {
       v === 'scrub' || v === 'volume-native' ? v : 'volume'
     ),
   holdToLock: value => broadcast('holdtolock', value === true),
-  sleepTimer: value => broadcast('sleeptimer', value ?? '300'),
+  sleepTimer: () =>
+    broadcastPerDeviceSetting('sleepTimer', 'sleeptimer', v =>
+      typeof v === 'string' ? v : '300'
+    ),
   launcherAutoReturn: value => broadcast('autoreturn', value !== false),
   showLockShortcut: value => broadcast('lockshortcut', value === true),
   showShutdownShortcut: value => broadcast('shutdownshortcut', value === true),
@@ -66,8 +69,10 @@ const storageValueHandlers: Record<string, (value: unknown) => void> = {
     broadcastPerDeviceSetting('defaultView', 'defaultview', v =>
       v === 'shortcuts' ? 'shortcuts' : 'nowplaying'
     ),
-  backButton: value =>
-    broadcast('backbutton', value === 'library' ? 'library' : 'shortcuts'),
+  backButton: () =>
+    broadcastPerDeviceSetting('backButton', 'backbutton', v =>
+      v === 'library' ? 'library' : 'shortcuts'
+    ),
   visualizerSize: value =>
     broadcast(
       'visualizersize',

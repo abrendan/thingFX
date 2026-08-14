@@ -417,6 +417,9 @@ const ClientTab: React.FC = () => {
     status: 'error' | 'success' | 'loading'
   } | null>(null)
   const [screensaverStyle, setScreensaverStyle] = useState('bubbles')
+  const [screensaverFolder, setScreensaverFolder] = useState<string | null>(
+    null
+  )
   const [patches, setPatches] = useState<
     | { name: string; description: string; installed: boolean }[]
     | false
@@ -447,6 +450,7 @@ const ClientTab: React.FC = () => {
 
       const hasImage = await window.api.hasCustomScreensaverImage()
       setHasCustomImage(hasImage)
+      setScreensaverFolder(await window.api.getScreensaverFolder())
 
       setLoaded(true)
     }
@@ -651,6 +655,58 @@ const ClientTab: React.FC = () => {
                           status: 'error'
                         })
                       }
+                    }}
+                  >
+                    <span className="material-icons">delete</span>
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className={styles.header}>
+              <div className={styles.text}>
+                <p className={styles.label}>Screensaver Picture Folder</p>
+                <p className={styles.description}>
+                  {screensaverFolder
+                    ? `Cycling through pictures in ${screensaverFolder}`
+                    : 'Pick a folder of pictures — the screensaver switches between them randomly.'}
+                </p>
+              </div>
+              <div className={styles.actions}>
+                <button
+                  onClick={async () => {
+                    setScreensaverStatus(null)
+
+                    const result =
+                      await window.api.chooseScreensaverFolder()
+
+                    if (result && result.success) {
+                      setScreensaverFolder(result.folder ?? null)
+                      setScreensaverStatus({
+                        message: `Folder selected — ${result.count} picture${result.count === 1 ? '' : 's'} found.`,
+                        status: 'success'
+                      })
+                    } else if (result.error) {
+                      setScreensaverStatus({
+                        message:
+                          result.message || 'Failed to select folder',
+                        status: 'error'
+                      })
+                    }
+                  }}
+                >
+                  <span className="material-icons">folder_open</span>
+                </button>
+                {screensaverFolder && (
+                  <button
+                    data-type="danger"
+                    onClick={async () => {
+                      setScreensaverStatus(null)
+                      await window.api.removeScreensaverFolder()
+                      setScreensaverFolder(null)
+                      setScreensaverStatus({
+                        message: 'Folder removed.',
+                        status: 'success'
+                      })
                     }}
                   >
                     <span className="material-icons">delete</span>

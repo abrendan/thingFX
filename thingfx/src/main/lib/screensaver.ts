@@ -3,6 +3,75 @@ import path from 'path'
 import fs from 'fs'
 import { serverManager } from './server.js'
 import { AuthenticatedWebSocket } from '../types/WebSocketServer.js'
+import { getStorageValue, setStorageValue } from './storage.js'
+
+export const SCREENSAVER_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp']
+
+// Folder-based screensaver: a folder of pictures the screensaver cycles
+// through randomly. Stored as an absolute path in storage.
+export async function chooseScreensaverFolder() {
+  const res = await dialog.showOpenDialog({
+    properties: ['openDirectory']
+  })
+
+  if (res.canceled) return { success: false }
+
+  const folder = res.filePaths[0]
+  const images = listScreensaverFolderImages(folder)
+
+  if (images.length === 0)
+    return {
+      success: false,
+      error: 'no_images',
+      message:
+        'That folder has no images (png, jpg or webp). Please pick a folder that contains pictures.'
+    }
+
+  setStorageValue('screensaverFolder', folder)
+  updateScreensaverImage()
+
+  return { success: true, folder, count: images.length }
+}
+
+export function removeScreensaverFolder() {
+  setStorageValue('screensaverFolder', null)
+
+  // Fall back to the single uploaded image if there is one,
+  // otherwise tell clients the custom image is gone
+  if (hasCustomScreensaverImage()) updateScreensaverImage()
+  else broadcastScreensaverRemoved()
+
+  return true
+}
+
+export function getScreensaverFolder(): string | null {
+  const folder = getStorageValue('screensaverFolder')
+  if (typeof folder !== 'string' || !folder) return null
+  return folder
+}
+
+export function listScreensaverFolderImages(folder: string): string[] {
+  try {
+    if (!fs.statSync(folder).isDirectory()) return []
+    return fs
+      .readdirSync(folder)
+      .filter(f =>
+        SCREENSAVER_IMAGE_EXTENSIONS.includes(path.extname(f).toLowerCase())
+      )
+      .map(f => path.join(folder, f))
+      .filter(p => {
+        // Same 5MB cap as the single-image upload; the client refuses to
+        // cache anything larger
+        try {
+          return fs.statSync(p).size <= 5 * 1024 * 1024
+        } catch {
+          return false
+        }
+      })
+  } catch {
+    return []
+  }
+}
 
 export async function uploadScreensaverImage() {
   const res = await dialog.showOpenDialog({
@@ -69,6 +138,17 @@ export function removeScreensaverImage() {
     fs.unlinkSync(target)
   }
 
+  // A configured folder still supplies images — just refresh clients
+  if (getScreensaverFolder()) {
+    updateScreensaverImage()
+    return true
+  }
+
+  broadcastScreensaverRemoved()
+  return true
+}
+
+function broadcastScreensaverRemoved() {
   const wss = serverManager.getServer()
   if (wss) {
     wss.clients.forEach(async (ws: AuthenticatedWebSocket) => {

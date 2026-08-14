@@ -91,6 +91,15 @@ declare global {
         message?: string
       }>
       removeScreensaverImage: () => Promise<boolean>
+      chooseScreensaverFolder: () => Promise<{
+        success: boolean
+        folder?: string
+        count?: number
+        error?: string
+        message?: string
+      }>
+      removeScreensaverFolder: () => Promise<boolean>
+      getScreensaverFolder: () => Promise<string | null>
       hasCustomScreensaverImage: () => Promise<boolean>
       openDevTools: () => void
       getChannel: () => Promise<'stable' | 'nightly'>
