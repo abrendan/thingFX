@@ -13,7 +13,7 @@ import {
 } from './utils.js'
 
 import { setAutoBrightness, setBrightnessSmooth } from './adb.js'
-import { broadcastPerDeviceSetting } from './devices.js'
+import { broadcastPerDeviceSetting, normalizeScreensaverStyle } from './devices.js'
 import { fetchAndBroadcastWeather } from './weather.js'
 import { serverManager } from './server.js'
 import { updateTime } from './time.js'
@@ -63,6 +63,9 @@ const storageValueHandlers: Record<string, (value: unknown) => void> = {
       typeof v === 'string' ? v : '300'
     ),
   launcherAutoReturn: value => broadcast('autoreturn', value !== false),
+  launcherLabels: value => broadcast('launcherlabels', value !== false),
+  volumeSource: value =>
+    broadcast('volumesource', value === 'system' ? 'system' : 'player'),
   showLockShortcut: value => broadcast('lockshortcut', value === true),
   showShutdownShortcut: value => broadcast('shutdownshortcut', value === true),
   defaultView: () =>
@@ -83,7 +86,12 @@ const storageValueHandlers: Record<string, (value: unknown) => void> = {
       'orientation',
       value === 'portrait-right' || value === 'portrait-left' ? value : 'landscape'
     ),
-  screensaverStyle: value => broadcast('screensaverstyle', value),
+  screensaverStyle: () =>
+    broadcastPerDeviceSetting(
+      'screensaverStyle',
+      'screensaverstyle',
+      normalizeScreensaverStyle
+    ),
   weatherCity: () => { fetchAndBroadcastWeather() },
   weatherUnit: () => { fetchAndBroadcastWeather() },
   logLevel: async value => setLogLevel(value as LogLevel),

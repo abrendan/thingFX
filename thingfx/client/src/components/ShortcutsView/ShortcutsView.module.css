@@ -20,7 +20,7 @@
 .grid {
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 14px;
   align-content: flex-start;
   overflow-y: auto;
@@ -46,13 +46,13 @@
 
 /* 4 or fewer tiles: one big row — scale the icons and labels up too */
 .gridFill[data-big='true'] .appBtn .material-icons {
-  font-size: 64px;
+  font-size: 96px;
 }
 
 .gridFill[data-big='true'] .iconWrap {
-  width: 112px;
-  height: 112px;
-  border-radius: 28px;
+  width: 160px;
+  height: 160px;
+  border-radius: 36px;
 }
 
 .gridFill[data-big='true'] .appLabel {
@@ -88,19 +88,18 @@
 }
 
 .appBtn .material-icons {
-  font-size: 42px;
+  font-size: 80px;
   color: rgba(var(--c-fg), 0.75);
 }
 
 .iconWrap {
-  width: 68px;
-  height: 68px;
-  border-radius: 18px;
+  width: 136px;
+  height: 136px;
+  border-radius: 30px;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(var(--c-fg), 0.06);
 }
 
 .appIcon {
@@ -134,7 +133,6 @@
 }
 
 .lockBtn .material-icons {
-  font-size: 34px;
   color: rgba(var(--c-fg), 0.5);
 }
 

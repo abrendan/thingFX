@@ -21,9 +21,11 @@ enum IPCHandler {
   GetStorageValue = 'getStorageValue',
   SetStorageValue = 'setStorageValue',
   TriggerCarThingStateUpdate = 'triggerCarThingStateUpdate',
+  RestartAdbServer = 'restartAdbServer',
   UploadShortcutImage = 'uploadShortcutImage',
   RemoveNewShortcutImage = 'removeNewShortcutImage',
   BrowseForApp = 'browseForApp',
+  ListStoreApps = 'listStoreApps',
   GetShortcuts = 'getShortcuts',
   AddShortcut = 'addShortcut',
   RemoveShortcut = 'removeShortcut',
@@ -100,11 +102,13 @@ const api = {
     ipcRenderer.invoke(IPCHandler.SetStorageValue, key, value),
   triggerCarThingStateUpdate: () =>
     ipcRenderer.invoke(IPCHandler.TriggerCarThingStateUpdate),
+  restartAdbServer: () => ipcRenderer.invoke(IPCHandler.RestartAdbServer),
   uploadShortcutImage: (name: string) =>
     ipcRenderer.invoke(IPCHandler.UploadShortcutImage, name),
   removeNewShortcutImage: () =>
     ipcRenderer.invoke(IPCHandler.RemoveNewShortcutImage),
   browseForApp: () => ipcRenderer.invoke(IPCHandler.BrowseForApp),
+  listStoreApps: () => ipcRenderer.invoke(IPCHandler.ListStoreApps),
   getShortcuts: () => ipcRenderer.invoke(IPCHandler.GetShortcuts),
   addShortcut: (shortcut: Shortcut) =>
     ipcRenderer.invoke(IPCHandler.AddShortcut, shortcut),

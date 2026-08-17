@@ -10,9 +10,9 @@
 }
 
 .dialog {
-  width: min(440px, 85vw);
-  padding: 28px 28px 22px;
-  border-radius: 24px;
+  width: min(620px, 92vw);
+  padding: 40px 36px 32px;
+  border-radius: 28px;
   background: rgba(30, 30, 34, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
@@ -20,29 +20,29 @@
 }
 
 .title {
-  font-size: 24px;
+  font-size: 30px;
   font-weight: 700;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   color: rgba(var(--c-fg), 1);
 }
 
 .message {
-  font-size: 15px;
+  font-size: 18px;
   color: rgba(var(--c-fg), 0.6);
-  margin-bottom: 22px;
+  margin-bottom: 32px;
 }
 
 .actions {
   display: flex;
-  gap: 12px;
+  gap: 24px;
 }
 
 .actions button {
   flex: 1;
-  padding: 14px 0;
-  border-radius: 14px;
+  padding: 22px 0;
+  border-radius: 18px;
   border: none;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 600;
   cursor: pointer;
 }

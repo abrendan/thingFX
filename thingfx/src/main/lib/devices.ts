@@ -12,10 +12,25 @@ export const PER_DEVICE_KEYS = [
   'clientTheme',
   'bgStyle',
   'sleepTimer',
-  'backButton'
+  'backButton',
+  'screensaverStyle'
 ] as const
 
 export type PerDeviceKey = (typeof PER_DEVICE_KEYS)[number]
+
+const SCREENSAVER_STYLES = [
+  'clock',
+  'aurora',
+  'aurora2',
+  'aurora-plain',
+  'aurora2-plain'
+] as const
+
+export function normalizeScreensaverStyle(value: unknown): string {
+  return SCREENSAVER_STYLES.includes(value as (typeof SCREENSAVER_STYLES)[number])
+    ? (value as string)
+    : 'bubbles'
+}
 
 export interface DeviceProfile {
   name?: string
@@ -230,6 +245,8 @@ export function pushDeviceSettings(ws: AuthenticatedWebSocket) {
   send('sleeptimer', typeof timer === 'string' ? timer : '300')
   const back = resolveDeviceSetting(serial, 'backButton')
   send('backbutton', back === 'library' ? 'library' : 'shortcuts')
+  const saver = resolveDeviceSetting(serial, 'screensaverStyle')
+  send('screensaverstyle', normalizeScreensaverStyle(saver))
 }
 
 // After a profile change, re-push resolved settings to that device's

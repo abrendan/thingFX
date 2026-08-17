@@ -37,99 +37,133 @@ const TAB_PARAM: Record<string, Tab> = {
   about: Tab.About
 }
 
-const Settings: React.FC = () => {
-  const { devMode } = useContext(DevModeContext)
-  const location = useLocation()
+// Hero metadata for each settings section: icon, gradient "illustration"
+// colors, and a short description shown under the title.
+const TAB_HERO: Record<
+  Tab,
+  { icon: string; title: string; blurb: string; gradient: string }
+> = {
+  [Tab.General]: {
+    icon: 'settings',
+    title: 'General',
+    blurb: 'Installation and playback basics for your Car Thing.',
+    gradient: 'linear-gradient(135deg, #8b5cf6, #6366f1)'
+  },
+  [Tab.Client]: {
+    icon: 'devices',
+    title: 'Car Thing',
+    blurb: 'Clock, weather, brightness, sleep and screensaver.',
+    gradient: 'linear-gradient(135deg, #06b6d4, #3b82f6)'
+  },
+  [Tab.Appearance]: {
+    icon: 'palette',
+    title: 'Appearance',
+    blurb: 'Themes, the player screen, and how you navigate.',
+    gradient: 'linear-gradient(135deg, #ec4899, #f43f5e)'
+  },
+  [Tab.Buttons]: {
+    icon: 'developer_board',
+    title: 'Buttons',
+    blurb: 'Assign actions to the four physical preset buttons.',
+    gradient: 'linear-gradient(135deg, #f59e0b, #f97316)'
+  },
+  [Tab.Startup]: {
+    icon: 'rocket_launch',
+    title: 'Startup',
+    blurb: 'How thingFX behaves when your PC starts.',
+    gradient: 'linear-gradient(135deg, #10b981, #14b8a6)'
+  },
+  [Tab.Advanced]: {
+    icon: 'code',
+    title: 'Advanced',
+    blurb: 'Developer mode, logging and server options.',
+    gradient: 'linear-gradient(135deg, #64748b, #475569)'
+  },
+  [Tab.Logs]: {
+    icon: 'description',
+    title: 'Logs',
+    blurb: 'Live application logs for debugging.',
+    gradient: 'linear-gradient(135deg, #737373, #525252)'
+  },
+  [Tab.About]: {
+    icon: 'info',
+    title: 'About',
+    blurb: 'Version info and the people behind thingFX.',
+    gradient: 'linear-gradient(135deg, #a78bfa, #7c3aed)'
+  }
+}
 
-  const [currentTab, setCurrentTab] = useState<Tab>(() => {
-    const param = new URLSearchParams(location.search).get('tab')
-    return TAB_PARAM[param ?? ''] ?? Tab.General
-  })
+// Titled card that groups related settings
+const Group: React.FC<{
+  title?: string
+  icon?: string
+  children: React.ReactNode
+}> = ({ title, icon, children }) => (
+  <div className={styles.group}>
+    {title && (
+      <div className={styles.groupTitle}>
+        {icon && <span className="material-icons">{icon}</span>}
+        {title}
+      </div>
+    )}
+    <div className={styles.groupBody}>{children}</div>
+  </div>
+)
+
+const Settings: React.FC = () => {
+  const location = useLocation()
+  const { devMode } = useContext(DevModeContext)
+
+  // Logs is developer-only: fall back to General when dev mode is off
+  const resolveTab = (search: string): Tab => {
+    const param = new URLSearchParams(search).get('tab')
+    const tab = TAB_PARAM[param ?? ''] ?? Tab.General
+    return tab === Tab.Logs && !devMode ? Tab.General : tab
+  }
+
+  const [currentTab, setCurrentTab] = useState<Tab>(() =>
+    resolveTab(location.search)
+  )
+
+  // The sidebar navigates between sections via ?tab=..., so follow the URL
+  useEffect(() => {
+    setCurrentTab(resolveTab(location.search))
+  }, [location.search, devMode])
+
+  const hero = TAB_HERO[currentTab]
 
   return (
     <div className={styles.settingsPage}>
-      <h2 className={styles.pageTitle}>Settings</h2>
-      <div className={styles.content}>
-          <div className={styles.tabs}>
-            <button
-              onClick={() => setCurrentTab(Tab.General)}
-              data-active={currentTab === Tab.General}
-            >
-              <span className="material-icons">settings</span>
-              General
-            </button>
-            <button
-              onClick={() => setCurrentTab(Tab.Client)}
-              data-active={currentTab === Tab.Client}
-            >
-              <span className="material-icons">devices</span>
-              Client
-            </button>
-            <button
-              onClick={() => setCurrentTab(Tab.Appearance)}
-              data-active={currentTab === Tab.Appearance}
-            >
-              <span className="material-icons">palette</span>
-              Theme
-            </button>
-            <button
-              onClick={() => setCurrentTab(Tab.Startup)}
-              data-active={currentTab === Tab.Startup}
-            >
-              <span className="material-icons">security</span>
-              Startup
-            </button>
-            <button
-              onClick={() => setCurrentTab(Tab.Advanced)}
-              data-active={currentTab === Tab.Advanced}
-            >
-              <span className="material-icons">code</span>
-              Advanced
-            </button>
-            {devMode && (
-              <button
-                onClick={() => setCurrentTab(Tab.Logs)}
-                data-active={currentTab === Tab.Logs}
-              >
-                <span className="material-icons">description</span>
-                Logs
-              </button>
-            )}
-            <button
-              onClick={() => setCurrentTab(Tab.Buttons)}
-              data-active={currentTab === Tab.Buttons}
-            >
-              <span className="material-icons">developer_board</span>
-              Buttons
-            </button>
-            <button
-              onClick={() => setCurrentTab(Tab.About)}
-              data-active={currentTab === Tab.About}
-            >
-              <span className="material-icons">info</span>
-              About
-            </button>
-          </div>
-          <div className={styles.tab}>
-            {currentTab === Tab.General ? (
-              <GeneralTab />
-            ) : currentTab === Tab.Client ? (
-              <ClientTab />
-            ) : currentTab === Tab.Appearance ? (
-              <AppearanceTab />
-            ) : currentTab === Tab.Startup ? (
-              <StartupTab />
-            ) : currentTab === Tab.Advanced ? (
-              <AdvancedTab />
-            ) : currentTab === Tab.Logs ? (
-              <LogsTab />
-            ) : currentTab === Tab.Buttons ? (
-              <ButtonsTab />
-            ) : currentTab === Tab.About ? (
-              <AboutTab />
-            ) : null}
-          </div>
+      <div className={styles.hero}>
+        <div className={styles.heroIcon} style={{ background: hero.gradient }}>
+          <span className="material-icons">{hero.icon}</span>
         </div>
+        <div className={styles.heroText}>
+          <h2>{hero.title}</h2>
+          <p>{hero.blurb}</p>
+        </div>
+      </div>
+      <div className={styles.content}>
+        <div className={styles.tab} key={currentTab}>
+          {currentTab === Tab.General ? (
+            <GeneralTab />
+          ) : currentTab === Tab.Client ? (
+            <ClientTab />
+          ) : currentTab === Tab.Appearance ? (
+            <AppearanceTab />
+          ) : currentTab === Tab.Startup ? (
+            <StartupTab />
+          ) : currentTab === Tab.Advanced ? (
+            <AdvancedTab />
+          ) : currentTab === Tab.Logs ? (
+            <LogsTab />
+          ) : currentTab === Tab.Buttons ? (
+            <ButtonsTab />
+          ) : currentTab === Tab.About ? (
+            <AboutTab />
+          ) : null}
+        </div>
+      </div>
     </div>
   )
 }
@@ -375,19 +409,23 @@ const GeneralTab: React.FC = () => {
   return (
     loaded && (
       <div className={styles.settingsTab}>
-        <ToggleSetting
-          label="Install Automatically"
-          description="Automatically installs the web app to the CarThing when it is connected."
-          defaultValue={settings.current.installAutomatically ?? false}
-          onChange={value =>
-            window.api.setStorageValue('installAutomatically', value)
-          }
-        />
-        <ButtonSetting
-          label="Playback Setup"
-          description="Run the playback setup again to change how playback is handled."
-          onClick={() => navigate('/setup?step=3')}
-        />
+        <Group title="Installation" icon="install_desktop">
+          <ToggleSetting
+            label="Install Automatically"
+            description="Automatically installs the web app to the CarThing when it is connected."
+            defaultValue={settings.current.installAutomatically ?? false}
+            onChange={value =>
+              window.api.setStorageValue('installAutomatically', value)
+            }
+          />
+        </Group>
+        <Group title="Playback" icon="play_circle">
+          <ButtonSetting
+            label="Playback Setup"
+            description="Run the playback setup again to change how playback is handled."
+            onClick={() => navigate('/setup?step=3')}
+          />
+        </Group>
       </div>
     )
   )
@@ -488,86 +526,91 @@ const ClientTab: React.FC = () => {
   return (
     loaded && (
       <div className={styles.settingsTab}>
-        <SelectSetting
-          label="Time Format"
-          description="Displayed time format in the titlebar"
-          defaultValue={settings.current.timeFormat}
-          options={[
-            { value: 'HH:mm', label: '24-hour' },
-            { value: 'h:mm A', label: '12-hour' }
-          ]}
-          onChange={value =>
-            window.api.setStorageValue('timeFormat', value as string)
-          }
-        />
-        <SelectSetting
-          label="Date Format"
-          description="Displayed date format in the titlebar"
-          defaultValue={settings.current.dateFormat}
-          options={[
-            { value: 'ddd, D MMM', label: 'Short' },
-            { value: 'dddd, D MMMM', label: 'Long' }
-          ]}
-          onChange={value =>
-            window.api.setStorageValue('dateFormat', value as string)
-          }
-        />
-        <ToggleSetting
-          label="Auto Brightness"
-          description="Automatically adjust the brightness"
-          defaultValue={settings.current.autoBrightness ?? false}
-          onChange={value => {
-            window.api.setStorageValue('autoBrightness', value)
-            setAutoBrightness(value)
-          }}
-        />
-        <SliderSetting
-          label="Brightness"
-          description="Adjust the brightness of the screen"
-          disabled={autoBrightness}
-          defaultValue={settings.current.brightness}
-          min={0}
-          max={1}
-          step={0.05}
-          onRelease={value =>
-            window.api.setStorageValue('brightness', value as number)
-          }
-        />
-        <InputSubmitSetting
-          label="Weather City"
-          description="City name to show weather in the TopBar. Leave empty to disable."
-          defaultValue={settings.current.weatherCity ?? ''}
-          placeholder="e.g. New York"
-          submitLabel="Set"
-          onSubmit={async value => {
-            await window.api.setStorageValue('weatherCity', value || null)
-            if (!value) { setWeatherStatus(null); return }
-            setWeatherStatus({ message: 'Fetching weather...', status: 'loading' })
-            const result = await window.api.refreshWeather()
-            setWeatherStatus({ message: result.message, status: result.success ? 'success' : 'error' })
-          }}
-        />
-        {weatherStatus && (
-          <div
-            className={styles.status}
-            data-type={weatherStatus.status === 'loading' ? undefined : weatherStatus.status}
-          >
-            <span className="material-icons">
-              {weatherStatus.status === 'error' ? 'error_outline' : weatherStatus.status === 'loading' ? 'hourglass_empty' : 'check_circle'}
-            </span>
-            {weatherStatus.message}
-          </div>
-        )}
-        <SelectSetting
-          label="Temperature Unit"
-          description="Unit for weather temperature display."
-          defaultValue={settings.current.weatherUnit ?? 'fahrenheit'}
-          options={[
-            { value: 'fahrenheit', label: '°F — Fahrenheit' },
-            { value: 'celsius', label: '°C — Celsius' }
-          ]}
-          onChange={value => window.api.setStorageValue('weatherUnit', value as string)}
-        />
+        <Group title="Clock & Weather" icon="schedule">
+          <SelectSetting
+            label="Time Format"
+            description="Displayed time format in the titlebar"
+            defaultValue={settings.current.timeFormat}
+            options={[
+              { value: 'HH:mm', label: '24-hour' },
+              { value: 'h:mm A', label: '12-hour' }
+            ]}
+            onChange={value =>
+              window.api.setStorageValue('timeFormat', value as string)
+            }
+          />
+          <SelectSetting
+            label="Date Format"
+            description="Displayed date format in the titlebar"
+            defaultValue={settings.current.dateFormat}
+            options={[
+              { value: 'ddd, D MMM', label: 'Short' },
+              { value: 'dddd, D MMMM', label: 'Long' }
+            ]}
+            onChange={value =>
+              window.api.setStorageValue('dateFormat', value as string)
+            }
+          />
+          <InputSubmitSetting
+            label="Weather City"
+            description="City name to show weather in the TopBar. Leave empty to disable."
+            defaultValue={settings.current.weatherCity ?? ''}
+            placeholder="e.g. New York"
+            submitLabel="Set"
+            onSubmit={async value => {
+              await window.api.setStorageValue('weatherCity', value || null)
+              if (!value) { setWeatherStatus(null); return }
+              setWeatherStatus({ message: 'Fetching weather...', status: 'loading' })
+              const result = await window.api.refreshWeather()
+              setWeatherStatus({ message: result.message, status: result.success ? 'success' : 'error' })
+            }}
+          />
+          {weatherStatus && (
+            <div
+              className={styles.status}
+              data-type={weatherStatus.status === 'loading' ? undefined : weatherStatus.status}
+            >
+              <span className="material-icons">
+                {weatherStatus.status === 'error' ? 'error_outline' : weatherStatus.status === 'loading' ? 'hourglass_empty' : 'check_circle'}
+              </span>
+              {weatherStatus.message}
+            </div>
+          )}
+          <SelectSetting
+            label="Temperature Unit"
+            description="Unit for weather temperature display."
+            defaultValue={settings.current.weatherUnit ?? 'fahrenheit'}
+            options={[
+              { value: 'fahrenheit', label: '°F — Fahrenheit' },
+              { value: 'celsius', label: '°C — Celsius' }
+            ]}
+            onChange={value => window.api.setStorageValue('weatherUnit', value as string)}
+          />
+        </Group>
+        <Group title="Display" icon="brightness_6">
+          <ToggleSetting
+            label="Auto Brightness"
+            description="Automatically adjust the brightness"
+            defaultValue={settings.current.autoBrightness ?? false}
+            onChange={value => {
+              window.api.setStorageValue('autoBrightness', value)
+              setAutoBrightness(value)
+            }}
+          />
+          <SliderSetting
+            label="Brightness"
+            description="Adjust the brightness of the screen"
+            disabled={autoBrightness}
+            defaultValue={settings.current.brightness}
+            min={0}
+            max={1}
+            step={0.05}
+            onRelease={value =>
+              window.api.setStorageValue('brightness', value as number)
+            }
+          />
+        </Group>
+        <Group title="Sleep & Screensaver" icon="bedtime">
         <SelectSetting
           label="Sleep Method"
           description="Method used for putting the CarThing to sleep"
@@ -594,7 +637,10 @@ const ClientTab: React.FC = () => {
               options={[
                 { value: 'bubbles', label: 'Bubbles' },
                 { value: 'clock', label: 'Clock' },
-                { value: 'aurora', label: 'Clock (Aurora)' }
+                { value: 'aurora', label: 'Clock (Aurora)' },
+                { value: 'aurora2', label: 'Clock (Aurora Vivid)' },
+                { value: 'aurora-plain', label: 'Aurora (no clock)' },
+                { value: 'aurora2-plain', label: 'Aurora Vivid (no clock)' }
               ]}
               onChange={value => {
                 window.api.setStorageValue('screensaverStyle', value as string)
@@ -729,25 +775,26 @@ const ClientTab: React.FC = () => {
             )}
           </div>
         )}
+        </Group>
         {patches !== null && isDev ? (
-          <div className={styles.patches}>
-            <h2>Patches</h2>
-
-            {patches ? (
-              patches.map(patch => (
-                <Patch
-                  key={patch.name}
-                  {...patch}
-                  onApply={() => applyPatch(patch.name)}
-                />
-              ))
-            ) : (
-              <div className={styles.status}>
-                <span className="material-icons">info_outline</span>
-                Please connect your CarThing to see and install patches!
-              </div>
-            )}
-          </div>
+          <Group title="Patches" icon="healing">
+            <div className={styles.patches}>
+              {patches ? (
+                patches.map(patch => (
+                  <Patch
+                    key={patch.name}
+                    {...patch}
+                    onApply={() => applyPatch(patch.name)}
+                  />
+                ))
+              ) : (
+                <div className={styles.status}>
+                  <span className="material-icons">info_outline</span>
+                  Please connect your CarThing to see and install patches!
+                </div>
+              )}
+            </div>
+          </Group>
         ) : null}
       </div>
     )
@@ -798,6 +845,8 @@ const AppearanceTab: React.FC = () => {
   const [holdToLock, setHoldToLock] = useState(false)
   const [sleepTimer, setSleepTimer] = useState<string>('300')
   const [launcherAutoReturn, setLauncherAutoReturn] = useState(true)
+  const [launcherLabels, setLauncherLabels] = useState(true)
+  const [volumeSource, setVolumeSource] = useState('player')
   const [defaultView, setDefaultView] = useState<string>('nowplaying')
   const [accentColor, setAccentColor] = useState('#a78bfa')
   const settings = useRef<{ bgStyle?: string }>({})
@@ -817,6 +866,12 @@ const AppearanceTab: React.FC = () => {
       setHoldToLock((await window.api.getStorageValue('holdToLock')) === true)
       setSleepTimer(((await window.api.getStorageValue('sleepTimer')) || '300') as string)
       setLauncherAutoReturn((await window.api.getStorageValue('launcherAutoReturn')) !== false)
+      setLauncherLabels((await window.api.getStorageValue('launcherLabels')) !== false)
+      setVolumeSource(
+        ((await window.api.getStorageValue('volumeSource')) === 'system'
+          ? 'system'
+          : 'player') as string
+      )
       setDefaultView(((await window.api.getStorageValue('defaultView')) || 'nowplaying') as string)
       setAppTheme(theme)
       setAccentAuto(!accent)
@@ -841,9 +896,11 @@ const AppearanceTab: React.FC = () => {
     window.api.setStorageValue('accentColor', color)
   }
 
+  if (!loaded) return null
+
   return (
     <div className={styles.settingsTab}>
-      {loaded && (
+      <Group title="Theme & Colors" icon="palette">
         <SelectSetting
           label="Client theme"
           description="Color theme of the Car Thing display."
@@ -856,8 +913,20 @@ const AppearanceTab: React.FC = () => {
           ]}
           onChange={value => changeTheme(value as string)}
         />
-      )}
-      {loaded && (
+        <ToggleSetting
+          label="Automatic accent color"
+          description="Derive the Car Thing accent color from the current album art."
+          value={accentAuto}
+          onChange={changeAccentAuto}
+        />
+        {!accentAuto && (
+          <ColorSetting
+            label="Accent color"
+            description="Fixed accent color used on the Car Thing."
+            value={accentColor}
+            onChange={changeAccentColor}
+          />
+        )}
         <SelectSetting
           label="Screen orientation"
           description="Orientation of the Car Thing display. Use portrait if your Car Thing is mounted vertically."
@@ -872,8 +941,20 @@ const AppearanceTab: React.FC = () => {
             window.api.setStorageValue('orientation', value as string)
           }}
         />
-      )}
-      {loaded && (
+      </Group>
+      <Group title="Now Playing" icon="music_note">
+        <SelectSetting
+          label="Album Art Background"
+          description="How album art is shown behind the media player on the Car Thing."
+          defaultValue={settings.current.bgStyle}
+          options={[
+            { value: 'full', label: 'Full bleed' },
+            { value: 'thumbnail', label: 'Thumbnail (small)' },
+            { value: 'thumbnail-blur', label: 'Thumbnail (blurred background)' },
+            { value: 'thumbnail-lg', label: 'Thumbnail (large)' }
+          ]}
+          onChange={value => window.api.setStorageValue('bgStyle', value as string)}
+        />
         <ToggleSetting
           label="Visualizer"
           description="Show the music spectrum visualizer on the player screen."
@@ -883,8 +964,6 @@ const AppearanceTab: React.FC = () => {
             window.api.setStorageValue('visualizer', value)
           }}
         />
-      )}
-      {loaded && (
         <SelectSetting
           label="Visualizer size"
           description="Size of the music spectrum visualizer on the player screen."
@@ -899,53 +978,6 @@ const AppearanceTab: React.FC = () => {
             window.api.setStorageValue('visualizerSize', value as string)
           }}
         />
-      )}
-      {loaded && (
-        <SelectSetting
-          label="Back button"
-          description="View opened by one press of the Car Thing back button while playing. Double press opens the other view."
-          value={backButton}
-          options={[
-            { value: 'shortcuts', label: 'App launcher (default)' },
-            { value: 'library', label: 'Library' }
-          ]}
-          onChange={value => {
-            setBackButton(value as string)
-            window.api.setStorageValue('backButton', value as string)
-          }}
-        />
-      )}
-      {loaded && (
-        <ToggleSetting
-          label="Automatic accent color"
-          description="Derive the Car Thing accent color from the current album art."
-          value={accentAuto}
-          onChange={changeAccentAuto}
-        />
-      )}
-      {loaded && !accentAuto && (
-        <ColorSetting
-          label="Accent color"
-          description="Fixed accent color used on the Car Thing."
-          value={accentColor}
-          onChange={changeAccentColor}
-        />
-      )}
-      {loaded && (
-        <SelectSetting
-          label="Album Art Background"
-          description="How album art is shown behind the media player on the Car Thing."
-          defaultValue={settings.current.bgStyle}
-          options={[
-            { value: 'full', label: 'Full bleed' },
-            { value: 'thumbnail', label: 'Thumbnail (small)' },
-            { value: 'thumbnail-blur', label: 'Thumbnail (blurred background)' },
-            { value: 'thumbnail-lg', label: 'Thumbnail (large)' }
-          ]}
-          onChange={value => window.api.setStorageValue('bgStyle', value as string)}
-        />
-      )}
-      {loaded && (
         <SelectSetting
           label="Wheel behavior"
           description="What turning the Car Thing wheel does on the player screen."
@@ -960,8 +992,21 @@ const AppearanceTab: React.FC = () => {
             window.api.setStorageValue('wheelMode', value as string)
           }}
         />
-      )}
-      {loaded && (
+        <SelectSetting
+          label="Volume percentage shown"
+          description="Which volume the Car Thing shows at the top right of Now Playing."
+          value={volumeSource}
+          options={[
+            { value: 'player', label: 'Spotify volume' },
+            { value: 'system', label: 'Windows (system) volume' }
+          ]}
+          onChange={value => {
+            setVolumeSource(value as string)
+            window.api.setStorageValue('volumeSource', value as string)
+          }}
+        />
+      </Group>
+      <Group title="Navigation" icon="explore">
         <SelectSetting
           label="Main screen"
           description="Which screen the Car Thing uses as its home base."
@@ -975,8 +1020,19 @@ const AppearanceTab: React.FC = () => {
             window.api.setStorageValue('defaultView', value as string)
           }}
         />
-      )}
-      {loaded && (
+        <SelectSetting
+          label="Back button"
+          description="View opened by one press of the Car Thing back button while playing. Double press opens the other view."
+          value={backButton}
+          options={[
+            { value: 'shortcuts', label: 'App launcher (default)' },
+            { value: 'library', label: 'Library' }
+          ]}
+          onChange={value => {
+            setBackButton(value as string)
+            window.api.setStorageValue('backButton', value as string)
+          }}
+        />
         <ToggleSetting
           label="Return to main screen automatically"
           description="Go back to the main screen after 1 minute without input."
@@ -986,8 +1042,17 @@ const AppearanceTab: React.FC = () => {
             window.api.setStorageValue('launcherAutoReturn', value)
           }}
         />
-      )}
-      {loaded && (
+        <ToggleSetting
+          label="Show app names in the launcher"
+          description="Show each shortcut's name under its icon on the Car Thing's app screen."
+          value={launcherLabels}
+          onChange={value => {
+            setLauncherLabels(value)
+            window.api.setStorageValue('launcherLabels', value)
+          }}
+        />
+      </Group>
+      <Group title="Power" icon="power_settings_new">
         <SelectSetting
           label="Sleep timer"
           description="How long the Car Thing waits without input before showing the screensaver."
@@ -1003,8 +1068,6 @@ const AppearanceTab: React.FC = () => {
             window.api.setStorageValue('sleepTimer', value as string)
           }}
         />
-      )}
-      {loaded && (
         <ToggleSetting
           label="Hold to lock PC"
           description="Holding the Car Thing's confirm (play/pause) button for 3 seconds locks this computer."
@@ -1014,7 +1077,7 @@ const AppearanceTab: React.FC = () => {
             window.api.setStorageValue('holdToLock', value)
           }}
         />
-      )}
+      </Group>
     </div>
   )
 }
@@ -1044,22 +1107,24 @@ const StartupTab: React.FC = () => {
   return (
     loaded && (
       <div className={styles.settingsTab}>
-        <ToggleSetting
-          label="Launch on startup"
-          description="Starts the app when you log in. This will also start the server."
-          defaultValue={settings.current.launchOnStartup ?? false}
-          onChange={value =>
-            window.api.setStorageValue('launchOnStartup', value)
-          }
-        />
-        <ToggleSetting
-          label="Launch minimized"
-          description="Starts the app minimized in the system tray."
-          defaultValue={settings.current.launchMinimized ?? false}
-          onChange={value =>
-            window.api.setStorageValue('launchMinimized', value)
-          }
-        />
+        <Group title="When your PC starts" icon="rocket_launch">
+          <ToggleSetting
+            label="Launch on startup"
+            description="Starts the app when you log in. This will also start the server."
+            defaultValue={settings.current.launchOnStartup ?? false}
+            onChange={value =>
+              window.api.setStorageValue('launchOnStartup', value)
+            }
+          />
+          <ToggleSetting
+            label="Launch minimized"
+            description="Starts the app minimized in the system tray."
+            defaultValue={settings.current.launchMinimized ?? false}
+            onChange={value =>
+              window.api.setStorageValue('launchMinimized', value)
+            }
+          />
+        </Group>
       </div>
     )
   )
@@ -1141,6 +1206,7 @@ const AdvancedTab: React.FC = () => {
   return (
     loaded && (
       <div className={styles.settingsTab}>
+        <Group title="Developer" icon="code">
         <ToggleSetting
           label="Developer Mode"
           description="Enables some options for development purposes."
@@ -1172,6 +1238,8 @@ const AdvancedTab: React.FC = () => {
             window.api.setStorageValue('disableSocketAuth', value)
           }
         />
+        </Group>
+        <Group title="Server" icon="lan">
         <div className={styles.customPort}>
           <InputSubmitSetting
             label="Server Port"
@@ -1194,6 +1262,7 @@ const AdvancedTab: React.FC = () => {
             </p>
           )}
         </div>
+        </Group>
       </div>
     )
   )
@@ -1383,28 +1452,30 @@ const ButtonsTab: React.FC = () => {
   }
 
   return (
-    <div>
-      <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', marginBottom: '16px' }}>
-        Assign a shortcut to each physical preset button (1–4) on the top of the Car Thing.
-      </p>
-      {(['1', '2', '3', '4'] as const).map(btn => (
-        <div className={styles.selectSetting} key={btn}>
-          <div className={styles.text}>
-            <p className={styles.label}>Button {btn}</p>
+    <div className={styles.settingsTab}>
+      <Group title="Preset buttons" icon="dialpad">
+        <p className={styles.groupHint}>
+          Assign a shortcut to each physical preset button (1–4) on the top of the Car Thing.
+        </p>
+        {(['1', '2', '3', '4'] as const).map(btn => (
+          <div className={styles.selectSetting} key={btn}>
+            <div className={styles.text}>
+              <p className={styles.label}>Button {btn}</p>
+            </div>
+            <select
+              value={buttons[btn] ?? ''}
+              onChange={e => assign(btn, e.target.value || null)}
+            >
+              <option value=''>— None —</option>
+              <option value='__lock__'>Lock PC</option>
+              <option value='__shutdown__'>Shut Down PC (asks first)</option>
+              {shortcuts.map(s => (
+                <option key={s.id} value={s.id}>{s.name ?? s.id}</option>
+              ))}
+            </select>
           </div>
-          <select
-            value={buttons[btn] ?? ''}
-            onChange={e => assign(btn, e.target.value || null)}
-          >
-            <option value=''>— None —</option>
-            <option value='__lock__'>Lock PC</option>
-            <option value='__shutdown__'>Shut Down PC (asks first)</option>
-            {shortcuts.map(s => (
-              <option key={s.id} value={s.id}>{s.name ?? s.id}</option>
-            ))}
-          </select>
-        </div>
-      ))}
+        ))}
+      </Group>
     </div>
   )
 }

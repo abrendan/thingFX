@@ -49,9 +49,11 @@ declare global {
       getStorageValue: (key: string) => Promise<unknown>
       setStorageValue: (key: string, value: unknown) => Promise
       triggerCarThingStateUpdate: () => void
+      restartAdbServer: () => Promise<{ ok: boolean; error?: string }>
       uploadShortcutImage: (name: string) => Promise<string>
       removeNewShortcutImage: () => Promise<void>
       browseForApp: () => Promise<string | null>
+      listStoreApps: () => Promise<{ name: string; appId: string }[]>
       getShortcuts: () => Promise<Shortcut[]>
       getButtonShortcuts: () => Promise<Record<string, string | null>>
       setButtonShortcuts: (

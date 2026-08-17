@@ -361,3 +361,48 @@
 .buttons button[data-type='danger']:hover {
   background: rgba(255, 79, 79, 0.2);
 }
+
+/* Windows Store / UWP app picker */
+.storePicker {
+  margin-top: 8px;
+  border: 1px solid rgba(var(--fg-rgb), 0.14);
+  border-radius: 10px;
+  background: rgba(var(--fg-rgb), 0.04);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.storePicker input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.storeList {
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.storeItem {
+  all: unset;
+  cursor: pointer;
+  padding: 7px 10px;
+  border-radius: 7px;
+  font-size: 13px;
+  color: rgba(var(--fg-rgb), 0.8);
+  transition: 120ms ease;
+}
+
+.storeItem:hover {
+  background: rgba(var(--fg-rgb), 0.1);
+}
+
+.storeHint {
+  font-size: 12px;
+  color: rgba(var(--fg-rgb), 0.4);
+  padding: 6px 10px;
+}

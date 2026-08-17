@@ -12,6 +12,11 @@ interface Shortcut {
 
 type ImageTab = 'upload' | 'icon'
 
+interface StoreApp {
+  name: string
+  appId: string
+}
+
 const emptyDraft: Shortcut = { id: '', name: '', command: '' }
 
 const Shortcuts: React.FC = () => {
@@ -42,6 +47,12 @@ const Shortcuts: React.FC = () => {
     window.api.getShortcuts().then(setShortcuts)
   }, [])
 
+  // Windows Store / UWP app picker
+  const [storeApps, setStoreApps] = useState<StoreApp[] | null>(null)
+  const [storePickerOpen, setStorePickerOpen] = useState(false)
+  const [storeLoading, setStoreLoading] = useState(false)
+  const [storeFilter, setStoreFilter] = useState('')
+
   const isNew = editingId === null
   // Icon changes are always staged in the temporary 'new' image and only
   // promoted to the shortcut's own image on Save — Cancel discards them.
@@ -54,6 +65,8 @@ const Shortcuts: React.FC = () => {
     setHasSetImage(false)
     setStagedIcon(false)
     setImageTab('icon')
+    setStorePickerOpen(false)
+    setStoreFilter('')
     setEditorOpen(true)
   }
 
@@ -65,12 +78,38 @@ const Shortcuts: React.FC = () => {
     setStagedIcon(false)
     setImageTab('icon')
     setIconBust(Date.now())
+    setStorePickerOpen(false)
+    setStoreFilter('')
     setEditorOpen(true)
   }
 
   function closeEditor() {
     window.api.removeNewShortcutImage()
+    setStorePickerOpen(false)
     setEditorOpen(false)
+  }
+
+  async function toggleStorePicker() {
+    if (storePickerOpen) {
+      setStorePickerOpen(false)
+      return
+    }
+    setStorePickerOpen(true)
+    if (!storeApps) {
+      setStoreLoading(true)
+      setStoreApps(await window.api.listStoreApps())
+      setStoreLoading(false)
+    }
+  }
+
+  function pickStoreApp(app: StoreApp) {
+    setDraft(d => ({
+      ...d,
+      command: `shell:AppsFolder\\${app.appId}`,
+      name: d.name || app.name
+    }))
+    setStorePickerOpen(false)
+    setStoreFilter('')
   }
 
   async function browseForApp() {
@@ -237,7 +276,58 @@ const Shortcuts: React.FC = () => {
                 <span className="material-icons">folder_open</span>
                 Browse...
               </button>
+              <button
+                className={styles.browseBtn}
+                data-active={storePickerOpen}
+                onClick={toggleStorePicker}
+              >
+                <span className="material-icons">storefront</span>
+                Store Apps...
+              </button>
             </div>
+            {storePickerOpen && (
+              <div className={styles.storePicker}>
+                <input
+                  type="text"
+                  placeholder="Search installed apps..."
+                  value={storeFilter}
+                  onChange={e => setStoreFilter(e.target.value)}
+                  autoFocus
+                />
+                <div className={styles.storeList}>
+                  {storeLoading ? (
+                    <p className={styles.storeHint}>Loading apps…</p>
+                  ) : storeApps && storeApps.length > 0 ? (
+                    (() => {
+                      const filtered = storeApps.filter(a =>
+                        a.name
+                          .toLowerCase()
+                          .includes(storeFilter.toLowerCase())
+                      )
+                      return filtered.length > 0 ? (
+                        filtered.map(a => (
+                          <button
+                            key={a.appId}
+                            className={styles.storeItem}
+                            onClick={() => pickStoreApp(a)}
+                          >
+                            {a.name}
+                          </button>
+                        ))
+                      ) : (
+                        <p className={styles.storeHint}>
+                          No apps match "{storeFilter}"
+                        </p>
+                      )
+                    })()
+                  ) : (
+                    <p className={styles.storeHint}>
+                      No apps found (Windows only)
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className={styles.field}>

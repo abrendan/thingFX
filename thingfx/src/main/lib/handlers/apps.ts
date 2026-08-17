@@ -1,7 +1,7 @@
-import { exec } from 'child_process'
+import { exec, execFile } from 'child_process'
 
 import { getButtonShortcuts, getShortcutImage, getShortcuts } from '../shortcuts.js'
-import { getParsedPlatformCommand } from '../utils.js'
+import { getParsedPlatformCommand, getStoreAppMoniker } from '../utils.js'
 
 import {
   HandlerAction,
@@ -19,6 +19,14 @@ export const actions: HandlerAction[] = [
       const shortcuts = getShortcuts()
       const app = shortcuts.find(app => app.id === data)
       if (app) {
+        // Store/UWP apps launch via explorer with the moniker as a plain
+        // argument (no shell) so the AppID can't inject shell commands
+        const moniker = getStoreAppMoniker(app.command)
+        if (moniker) {
+          execFile('explorer.exe', [moniker])
+          return
+        }
+
         const parsed = getParsedPlatformCommand(app.command)
         if (!parsed) return
         const { cmd, shell } = parsed

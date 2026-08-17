@@ -87,6 +87,24 @@
   font-size: 20px;
 }
 
+.navSection {
+  margin: 14px 12px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(var(--fg-rgb), 0.3);
+}
+
+.subItem {
+  padding: 7px 12px;
+  font-size: 13px;
+}
+
+.subItem .material-icons {
+  font-size: 17px;
+}
+
 .navLabel {
   font-family: 'Open Sans Variable', sans-serif;
 }

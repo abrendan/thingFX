@@ -14,8 +14,10 @@ import * as wheelmode from './wheelmode.js'
 import * as holdtolock from './holdtolock.js'
 import * as identify from './identify.js'
 import * as sysvolume from './sysvolume.js'
+import * as volumesource from './volumesource.js'
 import * as sleeptimer from './sleeptimer.js'
 import * as autoreturn from './autoreturn.js'
+import * as launcherlabels from './launcherlabels.js'
 import * as lockshortcut from './lockshortcut.js'
 import * as shutdown from './shutdown.js'
 import * as shutdownshortcut from './shutdownshortcut.js'
@@ -48,8 +50,10 @@ export const handlers: Handler[] = [
   holdtolock,
   identify,
   sysvolume,
+  volumesource,
   sleeptimer,
   autoreturn,
+  launcherlabels,
   lockshortcut,
   shutdown,
   shutdownshortcut,

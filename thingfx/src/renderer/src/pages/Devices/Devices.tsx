@@ -64,6 +64,18 @@ const overrideFields: {
     ]
   },
   {
+    key: 'screensaverStyle',
+    label: 'Screensaver',
+    options: [
+      { value: 'bubbles', label: 'Bubbles' },
+      { value: 'clock', label: 'Clock' },
+      { value: 'aurora', label: 'Clock (Aurora)' },
+      { value: 'aurora2', label: 'Clock (Aurora Vivid)' },
+      { value: 'aurora-plain', label: 'Aurora (no clock)' },
+      { value: 'aurora2-plain', label: 'Aurora Vivid (no clock)' }
+    ]
+  },
+  {
     key: 'clientTheme',
     label: 'Theme',
     options: [
@@ -135,10 +147,40 @@ const Devices: React.FC = () => {
     setDevices(list as DeviceInfo[])
   }
 
+  const [adbRestarting, setAdbRestarting] = useState(false)
+  const [adbError, setAdbError] = useState(false)
+
+  const restartAdb = async () => {
+    if (adbRestarting) return
+    setAdbRestarting(true)
+    setAdbError(false)
+    try {
+      const res = await window.api.restartAdbServer()
+      setAdbError(!res?.ok)
+    } catch {
+      setAdbError(true)
+    } finally {
+      setAdbRestarting(false)
+    }
+  }
+
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <h2>Devices</h2>
+        <button
+          className={`${styles.actionBtn}${adbError ? ` ${styles.danger}` : ''}`}
+          onClick={restartAdb}
+          disabled={adbRestarting}
+          title="Kills and restarts the ADB process used to talk to Car Things. Try this if devices aren't being detected."
+        >
+          <span className="material-icons">restart_alt</span>
+          {adbRestarting
+            ? 'Restarting ADB…'
+            : adbError
+              ? 'Restart failed — retry'
+              : 'Restart ADB'}
+        </button>
       </div>
       <p className={styles.pageDesc}>
         Every Car Thing that connects gets its own profile, remembered by

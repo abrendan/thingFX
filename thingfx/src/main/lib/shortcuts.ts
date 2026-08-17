@@ -1,4 +1,5 @@
 import { app, dialog } from 'electron'
+import { exec } from 'child_process'
 import path from 'path'
 import fs from 'fs'
 
@@ -11,6 +12,44 @@ interface Shortcut {
   id: string
   name?: string
   command: string
+}
+
+export interface StoreApp {
+  name: string
+  appId: string
+}
+
+// List installed Start Menu / Store (UWP) apps via PowerShell Get-StartApps.
+// Windows only — returns [] elsewhere or on failure.
+export function listStoreApps(): Promise<StoreApp[]> {
+  if (process.platform !== 'win32') return Promise.resolve([])
+
+  return new Promise(resolve => {
+    exec(
+      'Get-StartApps | ConvertTo-Json -Compress',
+      { shell: 'powershell.exe', maxBuffer: 10 * 1024 * 1024 },
+      (err, stdout) => {
+        if (err) return resolve([])
+        try {
+          const parsed = JSON.parse(stdout.trim())
+          const arr = Array.isArray(parsed) ? parsed : [parsed]
+          resolve(
+            arr
+              .filter(
+                (a): a is { Name: string; AppID: string } =>
+                  !!a &&
+                  typeof a.Name === 'string' &&
+                  typeof a.AppID === 'string'
+              )
+              .map(a => ({ name: a.Name, appId: a.AppID }))
+              .sort((x, y) => x.name.localeCompare(y.name))
+          )
+        } catch {
+          resolve([])
+        }
+      }
+    )
+  })
 }
 
 export async function uploadShortcutImage(name: string) {

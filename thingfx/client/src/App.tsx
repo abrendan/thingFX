@@ -55,6 +55,8 @@ const App: React.FC = () => {
   const [buttonShortcuts, setButtonShortcuts] = useState<ButtonShortcuts>({ '1': null, '2': null, '3': null, '4': null })
   const [serverTime, setServerTime] = useState<{ time: string; date: string } | null>(null)
   const [bgStyle, setBgStyle] = useState<BgStyle>('full')
+  const [volumeSource, setVolumeSource] = useState<'player' | 'system'>('player')
+  const [sysVolume, setSysVolume] = useState<number | null>(null)
   const [accentOverride, setAccentOverride] = useState<string | null>(null)
   const [backPrimary, setBackPrimary] = useState<'shortcuts' | 'library'>('shortcuts')
   const backPrimaryRef = useRef<'shortcuts' | 'library'>('shortcuts')
@@ -159,6 +161,10 @@ const App: React.FC = () => {
         setVisualizerSize(data === 'large' || data === 'xl' ? data : 'normal')
       } else if (type === 'backbutton') {
         setBackPrimary(data === 'library' ? 'library' : 'shortcuts')
+      } else if (type === 'volumesource') {
+        setVolumeSource(data === 'system' ? 'system' : 'player')
+      } else if (type === 'sysvolume') {
+        if (typeof data === 'number') setSysVolume(data)
       } else if (type === 'screensaverstyle') {
         try { localStorage.setItem('lumi_screensaver_type', data as string) } catch {}
       } else if (type === 'weather') {
@@ -188,12 +194,25 @@ const App: React.FC = () => {
     socket.send(JSON.stringify({ type: 'visualizersize' }))
     socket.send(JSON.stringify({ type: 'backbutton' }))
     socket.send(JSON.stringify({ type: 'screensaverstyle' }))
+    socket.send(JSON.stringify({ type: 'volumesource' }))
     socket.send(JSON.stringify({ type: 'weather' }))
     // Load apps + preset button mappings up front so the physical buttons
     // work before the launcher is ever opened
     socket.send(JSON.stringify({ type: 'apps' }))
     return () => socket.removeEventListener('message', listener)
   }, [socket])
+
+  // Keep the system volume readout fresh while it's the selected source
+  useEffect(() => {
+    if (volumeSource !== 'system' || !ready || !socket) return
+    const request = () => {
+      if (socket.readyState === 1)
+        socket.send(JSON.stringify({ type: 'sysvolume', data: 'get' }))
+    }
+    request()
+    const id = setInterval(request, 5000)
+    return () => clearInterval(id)
+  }, [volumeSource, ready, socket])
 
   // Accent color: fixed override from desktop settings, or dynamic from album art
   useEffect(() => {
@@ -472,6 +491,7 @@ const App: React.FC = () => {
             mediaPlayerActive={activeTab === 'nowplaying'}
             weather={weather}
             hideVolume={bgStyle === 'thumbnail-lg' && activeTab === 'nowplaying'}
+            sysVolume={volumeSource === 'system' ? sysVolume : null}
           />
         )}
 

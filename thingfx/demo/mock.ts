@@ -47,7 +47,27 @@ const handlers: Record<string, (...args: unknown[]) => unknown> = {
   getLogs: () => Promise.resolve([]),
   getServerInfo: () => Promise.resolve(null),
   validateConfig: () => Promise.resolve(true),
-  triggerCarThingStateUpdate: () => Promise.resolve()
+  triggerCarThingStateUpdate: () => Promise.resolve(),
+  restartAdbServer: () => Promise.resolve({ ok: true }),
+  getDevices: () =>
+    Promise.resolve([
+      {
+        serial: '4853L0024J0225',
+        name: 'Desk Car Thing',
+        state: 'ready',
+        firstSeen: Date.now() - 86400000 * 30,
+        lastSeen: Date.now(),
+        overrides: { screensaverStyle: 'aurora2' }
+      },
+      {
+        serial: '4853L0117K0918',
+        name: 'Bedroom Car Thing',
+        state: 'disconnected',
+        firstSeen: Date.now() - 86400000 * 12,
+        lastSeen: Date.now() - 86400000 * 2,
+        overrides: { defaultView: 'shortcuts' }
+      }
+    ])
 }
 
 ;(window as unknown as { api: unknown }).api = new Proxy(

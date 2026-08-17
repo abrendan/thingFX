@@ -166,6 +166,88 @@ export function getParsedPlatformCommand(command: string) {
   }
 }
 
+// Windows Store / UWP apps (e.g. WhatsApp, Spotify from the Store) are
+// launched through their AppsFolder moniker. Returns the validated moniker
+// or null. The moniker must be passed to explorer.exe as an argument vector
+// (execFile, no shell) — never interpolated into a shell command string.
+export function getStoreAppMoniker(command: string) {
+  if (process.platform !== 'win32') return null
+  const unquoted = command.replace(/^"|"$/g, '')
+  // AppIDs are UWP AUMIDs (PackageFamily!App) or, for desktop apps listed by
+  // Get-StartApps, path-like IDs with spaces/braces/backslashes. Safe as an
+  // execFile argument — just exclude quotes and control characters.
+  return /^shell:AppsFolder\\[^"\r\n]{1,512}$/i.test(unquoted) ? unquoted : null
+}
+
+// Reads the current OS master volume as 0-100 (null if unavailable)
+const WIN_GET_VOLUME = `Add-Type -TypeDefinition @'
+using System.Runtime.InteropServices;
+[Guid("5CDF2C82-841E-4546-9722-0CF74078229A"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+interface IAudioEndpointVolume {
+  int NotImpl1(); int NotImpl2();
+  int GetChannelCount(out int pnChannelCount);
+  int SetMasterVolumeLevel(float fLevelDB, System.Guid pguidEventContext);
+  int SetMasterVolumeLevelScalar(float fLevel, System.Guid pguidEventContext);
+  int GetMasterVolumeLevel(out float pfLevelDB);
+  int GetMasterVolumeLevelScalar(out float pfLevel);
+}
+[Guid("D666063F-1587-4E43-81F1-B948E807363F"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+interface IMMDevice {
+  int Activate(ref System.Guid id, int clsCtx, int activationParams, out IAudioEndpointVolume aev);
+}
+[Guid("A95664D2-9614-4F35-A746-DE8DB63617E6"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+interface IMMDeviceEnumerator {
+  int NotImpl1();
+  int GetDefaultAudioEndpoint(int dataFlow, int role, out IMMDevice endpoint);
+}
+[ComImport, Guid("BCDE0395-E52F-467C-8E3D-C4579291692E")] class MMDeviceEnumeratorComObject { }
+public class Audio {
+  static IAudioEndpointVolume Vol() {
+    var enumerator = new MMDeviceEnumeratorComObject() as IMMDeviceEnumerator;
+    IMMDevice dev = null;
+    Marshal.ThrowExceptionForHR(enumerator.GetDefaultAudioEndpoint(0, 1, out dev));
+    IAudioEndpointVolume epv = null;
+    var epvid = typeof(IAudioEndpointVolume).GUID;
+    Marshal.ThrowExceptionForHR(dev.Activate(ref epvid, 23, 0, out epv));
+    return epv;
+  }
+  public static float Volume {
+    get { float v = -1; Marshal.ThrowExceptionForHR(Vol().GetMasterVolumeLevelScalar(out v)); return v; }
+  }
+}
+'@
+[math]::Round([Audio]::Volume * 100)`
+
+export async function getSystemVolume(): Promise<number | null> {
+  const platform = process.platform
+  let cmd: { cmd: string; shell: string } | null = null
+
+  if (platform === 'win32') {
+    cmd = { cmd: WIN_GET_VOLUME, shell: 'powershell.exe' }
+  } else if (platform === 'darwin') {
+    cmd = {
+      cmd: `osascript -e 'output volume of (get volume settings)'`,
+      shell: '/bin/sh'
+    }
+  } else if (platform === 'linux') {
+    cmd = {
+      cmd: `pactl get-sink-volume @DEFAULT_SINK@ | grep -oP '\\d+(?=%)' | head -1`,
+      shell: '/bin/sh'
+    }
+  }
+  if (!cmd) return null
+
+  const out = await new Promise<string | null>(resolve => {
+    exec(cmd.cmd, { shell: cmd.shell }, (err, stdout) =>
+      resolve(err ? null : stdout)
+    )
+  })
+  if (out === null) return null
+
+  const value = parseInt(out.trim(), 10)
+  return Number.isFinite(value) && value >= 0 && value <= 100 ? value : null
+}
+
 export function getShutdownPlatformCommand() {
   const platform = process.platform
 

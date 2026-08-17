@@ -16,6 +16,15 @@ import '@fontsource/material-icons'
 
 const page = new URLSearchParams(window.location.search).get('page') ?? '/'
 
+// Screenshot mode: freeze all animations/transitions so headless captures
+// don't land mid-fade.
+if (new URLSearchParams(window.location.search).has('still')) {
+  const style = document.createElement('style')
+  style.textContent =
+    '*, *::before, *::after { transition: none !important; animation: none !important; }'
+  document.head.appendChild(style)
+}
+
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <MemoryRouter initialEntries={[page]}>

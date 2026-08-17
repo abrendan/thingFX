@@ -13,7 +13,8 @@ import {
   Notification,
   protocol,
   net,
-  nativeImage
+  nativeImage,
+  powerMonitor
 } from 'electron'
 
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
@@ -26,6 +27,7 @@ import {
   setPlaybackHandlerConfig,
   setStorageValue
 } from './lib/storage.js'
+import { setPcLocked, isCurrentLockGeneration } from './lib/lockstate.js'
 import {
   clearLogs,
   downloadLogs,
@@ -51,7 +53,8 @@ import {
   setBrightnessSmooth,
   getAutoBrightness,
   setAutoBrightness,
-  restore
+  restore,
+  restartAdbServer
 } from './lib/adb.js'
 import {
   getDeviceList,
@@ -64,6 +67,7 @@ import {
 } from './lib/devices.js'
 import {
   getShortcuts,
+  listStoreApps,
   addShortcut,
   removeShortcut,
   updateShortcut,
@@ -231,6 +235,46 @@ app.on('ready', async () => {
 
   if (getStorageValue('launchMinimized') !== true) createWindow()
   else app.dock?.hide()
+
+  // When the PC is locked, put every connected Car Thing into screensaver;
+  // wake them again on unlock.
+  const broadcastToClients = (msg: object) => {
+    const wss = serverManager.getServer()
+    if (!wss) return
+    const payload = JSON.stringify(msg)
+    wss.clients.forEach(ws => {
+      const client =
+        ws as import('./types/WebSocketServer.js').AuthenticatedWebSocket
+      if (client.authenticated && client.readyState === WebSocket.OPEN)
+        client.send(payload)
+    })
+  }
+
+  const applyLockState = async (locked: boolean) => {
+    const token = setPcLocked(locked)
+    broadcastToClients(
+      locked ? { type: 'sleep', data: 'screensaver' } : { type: 'wake' }
+    )
+    const serials = await findCarThings().catch(() => [] as string[])
+    for (const serial of serials) {
+      // A newer lock/unlock transition wins — stop applying a stale one
+      if (!isCurrentLockGeneration(token)) return
+      if (locked) {
+        await setAutoBrightness(serial, false).catch(() => {})
+        if (!isCurrentLockGeneration(token)) return
+        await setBrightnessSmooth(serial, 0.1, 10).catch(() => {})
+      } else if (getStorageValue('autoBrightness') === true) {
+        await setAutoBrightness(serial, true).catch(() => {})
+      } else {
+        const stored = getStorageValue('brightness')
+        const brightness = typeof stored === 'number' ? stored : 0.5
+        await setBrightnessSmooth(serial, brightness, 10).catch(() => {})
+      }
+    }
+  }
+
+  powerMonitor.on('lock-screen', () => void applyLockState(true))
+  powerMonitor.on('unlock-screen', () => void applyLockState(false))
 })
 
 app.on('browser-window-created', (_, window) => {
@@ -260,9 +304,11 @@ enum IPCHandler {
   GetStorageValue = 'getStorageValue',
   SetStorageValue = 'setStorageValue',
   TriggerCarThingStateUpdate = 'triggerCarThingStateUpdate',
+  RestartAdbServer = 'restartAdbServer',
   UploadShortcutImage = 'uploadShortcutImage',
   RemoveNewShortcutImage = 'removeNewShortcutImage',
   BrowseForApp = 'browseForApp',
+  ListStoreApps = 'listStoreApps',
   GetShortcuts = 'getShortcuts',
   AddShortcut = 'addShortcut',
   RemoveShortcut = 'removeShortcut',
@@ -521,6 +567,21 @@ async function setupIpcHandlers() {
     await carThingStateUpdate()
   })
 
+  ipcMain.handle(IPCHandler.RestartAdbServer, async () => {
+    try {
+      await restartAdbServer()
+    } catch (err) {
+      log(
+        `ADB restart failed: ${(err as Error).message}`,
+        'adb',
+        LogLevel.ERROR
+      )
+      return { ok: false, error: (err as Error).message }
+    }
+    await carThingStateUpdate().catch(() => null)
+    return { ok: true }
+  })
+
   ipcMain.handle(IPCHandler.UploadShortcutImage, async (_event, name) => {
     return await uploadShortcutImage(name)
   })
@@ -549,6 +610,10 @@ async function setupIpcHandlers() {
     })
     if (res.canceled || res.filePaths.length === 0) return null
     return res.filePaths[0]
+  })
+
+  ipcMain.handle(IPCHandler.ListStoreApps, async () => {
+    return listStoreApps()
   })
 
   ipcMain.handle(IPCHandler.GetShortcuts, async () => {

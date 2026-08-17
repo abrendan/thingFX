@@ -18,6 +18,7 @@ const ShortcutsView: React.FC<ShortcutsViewProps> = ({ onShutdownRequest }) => {
   const [images, setImages] = useState<Record<string, string>>({})
   const [showLock, setShowLock] = useState(false)
   const [showShutdown, setShowShutdown] = useState(false)
+  const [showLabels, setShowLabels] = useState(true)
 
   function openApp(id: string) {
     socket?.send(JSON.stringify({ type: 'apps', action: 'open', data: id }))
@@ -40,6 +41,10 @@ const ShortcutsView: React.FC<ShortcutsViewProps> = ({ onShutdownRequest }) => {
         setShowShutdown(data === true)
         return
       }
+      if (type === 'launcherlabels') {
+        setShowLabels(data !== false)
+        return
+      }
       if (type !== 'apps') return
       if (action === 'image') {
         setImages(prev => ({ ...prev, [data.id]: data.image }))
@@ -55,6 +60,7 @@ const ShortcutsView: React.FC<ShortcutsViewProps> = ({ onShutdownRequest }) => {
     socket.send(JSON.stringify({ type: 'apps' }))
     socket.send(JSON.stringify({ type: 'lockshortcut' }))
     socket.send(JSON.stringify({ type: 'shutdownshortcut' }))
+    socket.send(JSON.stringify({ type: 'launcherlabels' }))
 
     return () => socket.removeEventListener('message', listener)
   }, [ready, socket])
@@ -92,7 +98,9 @@ const ShortcutsView: React.FC<ShortcutsViewProps> = ({ onShutdownRequest }) => {
               ) : (
                 <span className="material-icons">rocket_launch</span>
               )}
-              <span className={styles.appLabel}>{app.name || 'App'}</span>
+              {showLabels && (
+                <span className={styles.appLabel}>{app.name || 'App'}</span>
+              )}
             </button>
           ))
         ) : apps && apps.length === 0 ? (
@@ -110,7 +118,7 @@ const ShortcutsView: React.FC<ShortcutsViewProps> = ({ onShutdownRequest }) => {
             aria-label="Lock"
           >
             <span className="material-icons">lock</span>
-            <span className={styles.appLabel}>Lock</span>
+            {showLabels && <span className={styles.appLabel}>Lock</span>}
           </button>
         )}
 
@@ -121,7 +129,9 @@ const ShortcutsView: React.FC<ShortcutsViewProps> = ({ onShutdownRequest }) => {
             aria-label="Shut Down"
           >
             <span className="material-icons">power_settings_new</span>
-            <span className={styles.appLabel}>Shut Down</span>
+            {showLabels && (
+              <span className={styles.appLabel}>Shut Down</span>
+            )}
           </button>
         )}
       </div>

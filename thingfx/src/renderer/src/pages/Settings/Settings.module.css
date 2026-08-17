@@ -18,6 +18,87 @@
   height: auto;
 }
 
+/* Hero header with gradient icon "illustration" */
+.hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.heroIcon {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.heroIcon .material-icons {
+  font-size: 30px;
+  color: #fff;
+}
+
+.heroText h2 {
+  color: var(--text);
+  margin: 0 0 2px;
+}
+
+.heroText p {
+  margin: 0;
+  font-size: 13px;
+  color: rgba(var(--fg-rgb), 0.5);
+}
+
+/* Grouped settings cards */
+.group {
+  margin-bottom: 18px;
+}
+
+.groupTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 4px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(var(--fg-rgb), 0.45);
+}
+
+.groupTitle :global(.material-icons) {
+  font-size: 16px;
+  color: var(--accent-2, var(--accent));
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.groupBody {
+  background: rgba(var(--fg-rgb), 0.03);
+  border: 1px solid rgba(var(--fg-rgb), 0.07);
+  border-radius: 14px;
+  padding: 6px 14px;
+}
+
+.groupBody > * {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.groupBody > * + * {
+  border-top: 1px solid rgba(var(--fg-rgb), 0.05);
+}
+
+.groupHint {
+  padding: 10px 0 4px;
+  font-size: 13px;
+  color: rgba(var(--fg-rgb), 0.5);
+}
+
 .settings {
   position: fixed;
   top: 0;
@@ -125,12 +206,14 @@
 .tab {
   flex: 1;
   overflow: hidden;
+  animation: appear 300ms ease;
 }
 
 .tab > div {
   animation: appear 500ms ease;
   overflow-y: auto;
   max-height: 100%;
+  padding-right: 6px;
 }
 
 @keyframes appear {
@@ -254,6 +337,8 @@
 .toggleSetting {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: 16px;
 }
 
 .toggleSetting .description {

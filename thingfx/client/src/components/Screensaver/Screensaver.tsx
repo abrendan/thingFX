@@ -2,10 +2,22 @@ import React, { useCallback, useContext, useEffect, useRef, useState } from 'rea
 
 import { SleepState } from '@/contexts/SleepContext.tsx'
 import { SocketContext } from '@/contexts/SocketContext.tsx'
-export type ScreensaverType = 'bubbles' | 'clock' | 'aurora'
+export type ScreensaverType =
+  | 'bubbles'
+  | 'clock'
+  | 'aurora'
+  | 'aurora2'
+  | 'aurora-plain'
+  | 'aurora2-plain'
 
 export function normalizeScreensaverType(value: unknown): ScreensaverType {
-  return value === 'clock' || value === 'aurora' ? value : 'bubbles'
+  return value === 'clock' ||
+    value === 'aurora' ||
+    value === 'aurora2' ||
+    value === 'aurora-plain' ||
+    value === 'aurora2-plain'
+    ? value
+    : 'bubbles'
 }
 
 import styles from './Screensaver.module.css'
@@ -172,23 +184,43 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
               className={styles.customImage}
               style={{ backgroundImage: `url(${customImage})` }}
             ></div>
-          ) : screensaverType === 'clock' || screensaverType === 'aurora' ? (
+          ) : screensaverType !== 'bubbles' ? (
             <div className={styles.clockDisplay}>
-              {screensaverType === 'aurora' && (
-                <div className={styles.aurora} aria-hidden>
+              {screensaverType !== 'clock' && (
+                <div
+                  className={styles.aurora}
+                  data-vivid={
+                    screensaverType === 'aurora2' ||
+                    screensaverType === 'aurora2-plain'
+                  }
+                  aria-hidden
+                >
                   <div className={styles.auroraRed} />
                   <div className={styles.auroraBlue} />
+                  {(screensaverType === 'aurora2' ||
+                    screensaverType === 'aurora2-plain') && (
+                    <>
+                      <div className={styles.auroraCrimson} />
+                      <div className={styles.auroraViolet} />
+                      <div className={styles.auroraTeal} />
+                    </>
+                  )}
                 </div>
               )}
-              <span className={styles.clockTime}>{serverClock?.time ?? '—'}</span>
-              <div className={styles.clockDivider} />
-              <span className={styles.clockDate}>{serverClock?.date ?? ''}</span>
-              {weather && (
-                <span className={styles.clockWeather}>
-                  <span className={`material-icons ${styles.clockWeatherIcon}`}>{weather.icon}</span>
-                  {Math.round(weather.temp)}°{weather.unit} · {weather.condition}
-                </span>
-              )}
+              {screensaverType !== 'aurora-plain' &&
+                screensaverType !== 'aurora2-plain' && (
+                  <>
+                    <span className={styles.clockTime}>{serverClock?.time ?? '—'}</span>
+                    <div className={styles.clockDivider} />
+                    <span className={styles.clockDate}>{serverClock?.date ?? ''}</span>
+                    {weather && (
+                      <span className={styles.clockWeather}>
+                        <span className={`material-icons ${styles.clockWeatherIcon}`}>{weather.icon}</span>
+                        {Math.round(weather.temp)}°{weather.unit} · {weather.condition}
+                      </span>
+                    )}
+                  </>
+                )}
             </div>
           ) : (
             <>

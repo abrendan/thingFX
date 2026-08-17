@@ -16,6 +16,8 @@ interface TopBarProps {
   weather?: WeatherInfo | null
   /** Hide the volume % readout (e.g. when large album art overlaps it) */
   hideVolume?: boolean
+  /** When set, show this system volume % instead of the player volume */
+  sysVolume?: number | null
 }
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -39,7 +41,7 @@ function formatDate(now: Date) {
   return `${DAYS[now.getDay()]}, ${MONTHS[now.getMonth()]} ${now.getDate()}`
 }
 
-const TopBar: React.FC<TopBarProps> = ({ clockFormat, serverTime, mediaPlayerActive, weather, hideVolume }) => {
+const TopBar: React.FC<TopBarProps> = ({ clockFormat, serverTime, mediaPlayerActive, weather, hideVolume, sysVolume }) => {
   const { playerData } = useContext(MediaContext)
   const [now, setNow] = useState(() => new Date())
 
@@ -65,14 +67,17 @@ const TopBar: React.FC<TopBarProps> = ({ clockFormat, serverTime, mediaPlayerAct
         </div>
         <span className={styles.clock}>{displayTime}</span>
         <div className={styles.rightCol}>
-          {playerData && !hideVolume && (
-            <div className={styles.volIndicator} data-maxed={playerData.volume >= 100}>
-              <span className="material-icons">
-                {playerData.volume === 0 ? 'volume_off' : playerData.volume < 50 ? 'volume_down' : 'volume_up'}
-              </span>
-              {Math.round(playerData.volume)}%
-            </div>
-          )}
+          {playerData && !hideVolume && (() => {
+            const volume = sysVolume != null ? sysVolume : playerData.volume
+            return (
+              <div className={styles.volIndicator} data-maxed={volume >= 100}>
+                <span className="material-icons">
+                  {volume === 0 ? 'volume_off' : volume < 50 ? 'volume_down' : 'volume_up'}
+                </span>
+                {Math.round(volume)}%
+              </div>
+            )
+          })()}
         </div>
       </div>
     )

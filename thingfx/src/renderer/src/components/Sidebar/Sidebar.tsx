@@ -18,9 +18,23 @@ const Sidebar: React.FC = () => {
     { id: 'home', icon: 'home', label: 'Home', action: () => { navigate('/'); setModalOpen('developer', false) }, isActive: location.pathname === '/' && openModals.length === 0 },
     { id: 'shortcuts', icon: 'apps', label: 'Shortcuts', action: () => { navigate('/shortcuts'); setModalOpen('developer', false) }, isActive: location.pathname === '/shortcuts' && openModals.length === 0 },
     { id: 'devices', icon: 'devices', label: 'Devices', action: () => { navigate('/devices'); setModalOpen('developer', false) }, isActive: location.pathname === '/devices' && openModals.length === 0 },
-    { id: 'settings', icon: 'tune', label: 'Settings', action: () => { navigate('/settings'); setModalOpen('developer', false) }, isActive: location.pathname === '/settings' && openModals.length === 0 },
     ...(devMode ? [{ id: 'developer', icon: 'code', label: 'Developer', action: () => setModalOpen('developer', !openModals.includes('developer')), isActive: openModals.includes('developer') }] : []),
   ]
+
+  // Settings sections shown directly in the sidebar
+  const settingsItems = [
+    { tab: 'general', icon: 'settings', label: 'General' },
+    { tab: 'client', icon: 'devices_other', label: 'Car Thing' },
+    { tab: 'appearance', icon: 'palette', label: 'Appearance' },
+    { tab: 'buttons', icon: 'dialpad', label: 'Buttons' },
+    { tab: 'startup', icon: 'rocket_launch', label: 'Startup' },
+    { tab: 'advanced', icon: 'code', label: 'Advanced' },
+    ...(devMode ? [{ tab: 'logs', icon: 'description', label: 'Logs' }] : []),
+    { tab: 'about', icon: 'info', label: 'About' }
+  ]
+
+  const onSettings = location.pathname === '/settings' && openModals.length === 0
+  const activeTab = new URLSearchParams(location.search).get('tab') ?? 'general'
 
   return (
     <div className={styles.sidebar}>
@@ -38,6 +52,22 @@ const Sidebar: React.FC = () => {
             className={styles.navItem}
             data-active={item.isActive}
             onClick={item.action}
+          >
+            <span className="material-icons">{item.icon}</span>
+            <span className={styles.navLabel}>{item.label}</span>
+          </button>
+        ))}
+
+        <p className={styles.navSection}>Settings</p>
+        {settingsItems.map(item => (
+          <button
+            key={item.tab}
+            className={`${styles.navItem} ${styles.subItem}`}
+            data-active={onSettings && activeTab === item.tab}
+            onClick={() => {
+              navigate(`/settings?tab=${item.tab}`)
+              setModalOpen('developer', false)
+            }}
           >
             <span className="material-icons">{item.icon}</span>
             <span className={styles.navLabel}>{item.label}</span>

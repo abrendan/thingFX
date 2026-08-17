@@ -83,6 +83,56 @@ export async function getAdbExecutable() {
 
 let staleDevicePolls = 0
 
+// Fully restart the adb server. kill-server alone sometimes isn't enough —
+// a wedged adb.exe (e.g. left over from before an update) can survive it,
+// so on Windows we force-kill the process as a verified last resort.
+// Restarts are coalesced (concurrent callers share one restart) and wait
+// for in-flight device operations (installs, forwards) to finish first.
+let restartPromise: Promise<void> | null = null
+
+export function restartAdbServer(): Promise<void> {
+  if (restartPromise) return restartPromise
+
+  restartPromise = (async () => {
+    // Give in-flight installs/forwards a chance to finish before killing
+    // the server out from under them
+    const deadline = Date.now() + 15000
+    while (activeDeviceOperations > 0 && Date.now() < deadline)
+      await new Promise(r => setTimeout(r, 250))
+
+    const adb = await getAdbExecutable()
+
+    log('Restarting ADB server...', 'adb', LogLevel.WARN)
+    const killedCleanly = await execAsync(`${adb} kill-server`)
+      .then(() => true)
+      .catch(() => false)
+
+    if (platform() === 'win32') {
+      // Only force-kill if adb.exe is verifiably still running — a stale
+      // server from another install location won't respond to kill-server
+      const stillRunning = await execAsync(
+        'tasklist /FI "IMAGENAME eq adb.exe" /NH'
+      )
+        .then(out => out.toLowerCase().includes('adb.exe'))
+        .catch(() => false)
+
+      if (!killedCleanly || stillRunning) {
+        log('adb.exe still running, force-killing', 'adb', LogLevel.WARN)
+        await execAsync('taskkill /F /IM adb.exe /T').catch(() => null)
+      }
+    }
+
+    // Let start failures propagate so callers can surface the error
+    await execAsync(`${adb} start-server`)
+    staleDevicePolls = 0
+    log('ADB server restarted', 'adb')
+  })().finally(() => {
+    restartPromise = null
+  })
+
+  return restartPromise
+}
+
 // Tracks in-flight device operations (install, socket forward) so the
 // stale-device recovery never kills the adb server mid-operation.
 let activeDeviceOperations = 0
@@ -113,7 +163,10 @@ async function getDevices() {
     line => line.includes('\toffline') || line.includes('\tunauthorized')
   )
 
-  if (devices.length === 0 && stale.length > 0 && activeDeviceOperations === 0) {
+  // Recover even when only SOME devices are stuck — with multiple
+  // CarThings one can stay healthy while another is wedged (common right
+  // after a client update), which previously blocked recovery entirely.
+  if (stale.length > 0 && activeDeviceOperations === 0) {
     staleDevicePolls++
     log(
       `Found ${stale.length} stale adb device(s), attempting reconnect (attempt ${staleDevicePolls})`,
@@ -122,8 +175,7 @@ async function getDevices() {
     )
     if (staleDevicePolls >= 3) {
       // Reconnect alone didn't help — restart the adb server entirely
-      staleDevicePolls = 0
-      await execAsync(`${adb} kill-server`).catch(() => null)
+      await restartAdbServer()
     } else {
       await execAsync(`${adb} reconnect offline`).catch(() => null)
     }

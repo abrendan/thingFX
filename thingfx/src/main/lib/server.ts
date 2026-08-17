@@ -13,6 +13,14 @@ import { runServerSetup } from './setup/setup.js'
 import { handlers } from './handlers/handlers.js'
 
 import { AuthenticatedWebSocket } from '../types/WebSocketServer.js'
+import { isPcLocked } from './lockstate.js'
+
+// A client that connects (or reconnects) while the PC is locked should go
+// straight into the screensaver instead of waking up normally.
+function sendLockStateIfLocked(ws: AuthenticatedWebSocket) {
+  if (isPcLocked())
+    ws.send(JSON.stringify({ type: 'sleep', data: 'screensaver' }))
+}
 
 interface ServerInfo {
   running: boolean
@@ -35,8 +43,10 @@ class ServerManager extends (EventEmitter as new () => TypedEmitter<{
       this.wss = new WebSocketServer({ port: this.port! })
 
       this.wss.on('connection', (ws: AuthenticatedWebSocket) => {
-        if (getStorageValue('disableSocketAuth') === true)
+        if (getStorageValue('disableSocketAuth') === true) {
           ws.authenticated = true
+          sendLockStateIfLocked(ws)
+        }
 
         ws.on('message', async msg => {
           const d = safeParse(msg.toString())
@@ -57,6 +67,7 @@ class ServerManager extends (EventEmitter as new () => TypedEmitter<{
                   data: 'Authenticated'
                 })
               )
+              sendLockStateIfLocked(ws)
             } else {
               ws.send(
                 JSON.stringify({
