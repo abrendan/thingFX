@@ -49,6 +49,9 @@ const handlers: Record<string, (...args: unknown[]) => unknown> = {
   validateConfig: () => Promise.resolve(true),
   triggerCarThingStateUpdate: () => Promise.resolve(),
   restartAdbServer: () => Promise.resolve({ ok: true }),
+  rebootAllCarThings: () => Promise.resolve(1),
+  getThingFxPaused: () => Promise.resolve(false),
+  setThingFxPaused: (paused) => Promise.resolve({ ok: true, paused }),
   getDevices: () =>
     Promise.resolve([
       {

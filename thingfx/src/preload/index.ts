@@ -10,6 +10,7 @@ enum IPCHandler {
   FindCarThing = 'findCarThing',
   FindSetupCarThing = 'findSetupCarThing',
   RebootCarThing = 'rebootCarThing',
+  RebootAllCarThings = 'rebootAllCarThings',
   RestoreCarThing = 'restoreCarThing',
   InstallApp = 'installApp',
   StartServer = 'startServer',
@@ -22,6 +23,8 @@ enum IPCHandler {
   SetStorageValue = 'setStorageValue',
   TriggerCarThingStateUpdate = 'triggerCarThingStateUpdate',
   RestartAdbServer = 'restartAdbServer',
+  GetThingFxPaused = 'getThingFxPaused',
+  SetThingFxPaused = 'setThingFxPaused',
   UploadShortcutImage = 'uploadShortcutImage',
   RemoveNewShortcutImage = 'removeNewShortcutImage',
   BrowseForApp = 'browseForApp',
@@ -81,6 +84,7 @@ const api = {
     ipcRenderer.invoke(IPCHandler.FindSetupCarThing),
   rebootCarThing: (serial?: string) =>
     ipcRenderer.invoke(IPCHandler.RebootCarThing, serial),
+  rebootAllCarThings: () => ipcRenderer.invoke(IPCHandler.RebootAllCarThings),
   getDevices: () => ipcRenderer.invoke(IPCHandler.GetDevices),
   setDeviceProfile: (serial: string, patch: Record<string, unknown>) =>
     ipcRenderer.invoke(IPCHandler.SetDeviceProfile, serial, patch),
@@ -103,6 +107,9 @@ const api = {
   triggerCarThingStateUpdate: () =>
     ipcRenderer.invoke(IPCHandler.TriggerCarThingStateUpdate),
   restartAdbServer: () => ipcRenderer.invoke(IPCHandler.RestartAdbServer),
+  getThingFxPaused: () => ipcRenderer.invoke(IPCHandler.GetThingFxPaused),
+  setThingFxPaused: (paused: boolean) =>
+    ipcRenderer.invoke(IPCHandler.SetThingFxPaused, paused),
   uploadShortcutImage: (name: string) =>
     ipcRenderer.invoke(IPCHandler.UploadShortcutImage, name),
   removeNewShortcutImage: () =>

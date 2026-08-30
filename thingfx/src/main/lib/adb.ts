@@ -89,9 +89,38 @@ let staleDevicePolls = 0
 // Restarts are coalesced (concurrent callers share one restart) and wait
 // for in-flight device operations (installs, forwards) to finish first.
 let restartPromise: Promise<void> | null = null
+let adbPaused = false
+
+export function isAdbPaused() {
+  return adbPaused
+}
+
+export async function setAdbPaused(paused: boolean): Promise<void> {
+  adbPaused = paused
+  if (!paused) {
+    staleDevicePolls = 0
+    log('thingFX ADB access resumed', 'adb')
+    return
+  }
+
+  const deadline = Date.now() + 15000
+  while (activeDeviceOperations > 0 && Date.now() < deadline)
+    await new Promise(r => setTimeout(r, 250))
+
+  const adb = await getAdbExecutable()
+  log('Pausing thingFX ADB access...', 'adb', LogLevel.WARN)
+  await execAsync(`${adb} kill-server`).catch(() => null)
+
+  if (platform() === 'win32')
+    await execAsync('taskkill /F /IM adb.exe /T').catch(() => null)
+
+  staleDevicePolls = 0
+  log('thingFX ADB access paused; adb.exe terminated', 'adb')
+}
 
 export function restartAdbServer(): Promise<void> {
   if (restartPromise) return restartPromise
+  if (adbPaused) return Promise.reject(new Error('thingFX is paused'))
 
   restartPromise = (async () => {
     // Give in-flight installs/forwards a chance to finish before killing
@@ -147,6 +176,8 @@ export async function withDeviceOperation<T>(fn: () => Promise<T>) {
 }
 
 async function getDevices() {
+  if (adbPaused) return []
+
   const adb = await getAdbExecutable()
   const res = await execAsync(`${adb} devices`)
 
@@ -362,6 +393,12 @@ export async function rebootCarThing(device: string | null) {
 
   log('Reboot...', 'adb', LogLevel.DEBUG)
   await execAsync(`${adb} -s ${device} shell "reboot"`)
+}
+
+export async function rebootAllCarThings(): Promise<number> {
+  const devices = await findCarThings()
+  await Promise.all(devices.map(device => rebootCarThing(device)))
+  return devices.length
 }
 
 export async function installApp(device: string | null) {

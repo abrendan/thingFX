@@ -45,6 +45,7 @@ import {
   findCarThing,
   findCarThings,
   rebootCarThing,
+  rebootAllCarThings,
   installApp,
   checkInstalledApp,
   forwardSocketServer,
@@ -54,7 +55,9 @@ import {
   getAutoBrightness,
   setAutoBrightness,
   restore,
-  restartAdbServer
+  restartAdbServer,
+  isAdbPaused,
+  setAdbPaused
 } from './lib/adb.js'
 import {
   getDeviceList,
@@ -293,6 +296,7 @@ enum IPCHandler {
   FindCarThing = 'findCarThing',
   FindSetupCarThing = 'findSetupCarThing',
   RebootCarThing = 'rebootCarThing',
+  RebootAllCarThings = 'rebootAllCarThings',
   RestoreCarThing = 'restoreCarThing',
   InstallApp = 'installApp',
   StartServer = 'startServer',
@@ -305,6 +309,8 @@ enum IPCHandler {
   SetStorageValue = 'setStorageValue',
   TriggerCarThingStateUpdate = 'triggerCarThingStateUpdate',
   RestartAdbServer = 'restartAdbServer',
+  GetThingFxPaused = 'getThingFxPaused',
+  SetThingFxPaused = 'setThingFxPaused',
   UploadShortcutImage = 'uploadShortcutImage',
   RemoveNewShortcutImage = 'removeNewShortcutImage',
   BrowseForApp = 'browseForApp',
@@ -370,6 +376,10 @@ async function setupIpcHandlers() {
 
   ipcMain.handle(IPCHandler.RebootCarThing, async (_event, serial?: string) => {
     await rebootCarThing(serial ?? null)
+  })
+
+  ipcMain.handle(IPCHandler.RebootAllCarThings, async () => {
+    return rebootAllCarThings()
   })
 
   ipcMain.handle(IPCHandler.RestoreCarThing, async () => {
@@ -506,6 +516,13 @@ async function setupIpcHandlers() {
   }
 
   async function carThingStateUpdate() {
+    if (isAdbPaused()) {
+      syncConnectedDevices([])
+      mainWindow?.webContents.send('carThingState', 'not_found')
+      mainWindow?.webContents.send('devicesUpdated', getDeviceList())
+      return
+    }
+
     const devices = await findCarThings().catch(err => {
       log(
         `Got an error while finding CarThing: ${err.message}`,
@@ -580,6 +597,27 @@ async function setupIpcHandlers() {
     }
     await carThingStateUpdate().catch(() => null)
     return { ok: true }
+  })
+
+  ipcMain.handle(IPCHandler.GetThingFxPaused, async () => isAdbPaused())
+
+  ipcMain.handle(IPCHandler.SetThingFxPaused, async (_event, paused: boolean) => {
+    try {
+      await setAdbPaused(paused === true)
+      await carThingStateUpdate().catch(() => null)
+      return { ok: true, paused: isAdbPaused() }
+    } catch (err) {
+      log(
+        `Failed to ${paused ? 'pause' : 'resume'} thingFX: ${(err as Error).message}`,
+        'adb',
+        LogLevel.ERROR
+      )
+      return {
+        ok: false,
+        paused: isAdbPaused(),
+        error: (err as Error).message
+      }
+    }
   })
 
   ipcMain.handle(IPCHandler.UploadShortcutImage, async (_event, name) => {

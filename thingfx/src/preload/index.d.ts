@@ -26,6 +26,7 @@ declare global {
         'not_found' | 'not_installed' | 'ready'
       >
       rebootCarThing: (serial?: string) => Promise<void>
+      rebootAllCarThings: () => Promise<number>
       getDevices: () => Promise<DeviceInfo[]>
       setDeviceProfile: (
         serial: string,
@@ -50,6 +51,12 @@ declare global {
       setStorageValue: (key: string, value: unknown) => Promise
       triggerCarThingStateUpdate: () => void
       restartAdbServer: () => Promise<{ ok: boolean; error?: string }>
+      getThingFxPaused: () => Promise<boolean>
+      setThingFxPaused: (paused: boolean) => Promise<{
+        ok: boolean
+        paused: boolean
+        error?: string
+      }>
       uploadShortcutImage: (name: string) => Promise<string>
       removeNewShortcutImage: () => Promise<void>
       browseForApp: () => Promise<string | null>

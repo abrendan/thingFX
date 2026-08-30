@@ -149,6 +149,15 @@ const Devices: React.FC = () => {
 
   const [adbRestarting, setAdbRestarting] = useState(false)
   const [adbError, setAdbError] = useState(false)
+  const [rebootingAll, setRebootingAll] = useState(false)
+  const [rebootAllMessage, setRebootAllMessage] = useState('')
+  const [thingFxPaused, setThingFxPaused] = useState(false)
+  const [pauseChanging, setPauseChanging] = useState(false)
+  const [pauseError, setPauseError] = useState(false)
+
+  useEffect(() => {
+    window.api.getThingFxPaused().then(setThingFxPaused)
+  }, [])
 
   const restartAdb = async () => {
     if (adbRestarting) return
@@ -164,23 +173,66 @@ const Devices: React.FC = () => {
     }
   }
 
+  const rebootAll = async () => {
+    if (rebootingAll || thingFxPaused) return
+    setRebootingAll(true)
+    setRebootAllMessage('')
+    try {
+      const count = await window.api.rebootAllCarThings()
+      setRebootAllMessage(
+        count > 0
+          ? `Reboot command sent to ${count} device${count === 1 ? '' : 's'}.`
+          : 'No connected Car Things found.'
+      )
+    } catch {
+      setRebootAllMessage('Could not reboot the connected devices.')
+    } finally {
+      setRebootingAll(false)
+    }
+  }
+
+  const togglePaused = async () => {
+    if (pauseChanging) return
+    setPauseChanging(true)
+    setPauseError(false)
+    try {
+      const res = await window.api.setThingFxPaused(!thingFxPaused)
+      setThingFxPaused(res.paused)
+      setPauseError(!res.ok)
+    } catch {
+      setPauseError(true)
+    } finally {
+      setPauseChanging(false)
+    }
+  }
+
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <h2>Devices</h2>
-        <button
-          className={`${styles.actionBtn}${adbError ? ` ${styles.danger}` : ''}`}
-          onClick={restartAdb}
-          disabled={adbRestarting}
-          title="Kills and restarts the ADB process used to talk to Car Things. Try this if devices aren't being detected."
-        >
-          <span className="material-icons">restart_alt</span>
-          {adbRestarting
-            ? 'Restarting ADB…'
-            : adbError
-              ? 'Restart failed — retry'
-              : 'Restart ADB'}
-        </button>
+        <div className={styles.headerActions}>
+          <button
+            className={styles.actionBtn}
+            onClick={rebootAll}
+            disabled={rebootingAll || thingFxPaused}
+          >
+            <span className="material-icons">restart_alt</span>
+            {rebootingAll ? 'Rebooting…' : 'Reboot all Devices'}
+          </button>
+          <button
+            className={`${styles.actionBtn}${adbError ? ` ${styles.danger}` : ''}`}
+            onClick={restartAdb}
+            disabled={adbRestarting || thingFxPaused}
+            title="Kills and restarts the ADB process used to talk to Car Things. Try this if devices aren't being detected."
+          >
+            <span className="material-icons">restart_alt</span>
+            {adbRestarting
+              ? 'Restarting ADB…'
+              : adbError
+                ? 'Restart failed — retry'
+                : 'Restart ADB'}
+          </button>
+        </div>
       </div>
       <p className={styles.pageDesc}>
         Every Car Thing that connects gets its own profile, remembered by
@@ -188,6 +240,41 @@ const Devices: React.FC = () => {
         screen, wheel behavior, theme, or background — anything left on
         "Use global setting" follows the Settings page.
       </p>
+      {rebootAllMessage && (
+        <p className={styles.statusMessage}>{rebootAllMessage}</p>
+      )}
+
+      <section className={styles.pauseSection}>
+        <div>
+          <h3>{thingFxPaused ? 'thingFX is paused' : 'Use ADB with Android devices'}</h3>
+          <p>
+            Pause thingFX and close its adb.exe process so you can use ADB
+            with other Android devices. Resume thingFX when you want it to
+            reconnect to your Car Things.
+          </p>
+          {pauseError && (
+            <p className={styles.errorMessage}>
+              Could not change the pause state. Please try again.
+            </p>
+          )}
+        </div>
+        <button
+          className={`${styles.actionBtn} ${thingFxPaused ? styles.resume : styles.pause}`}
+          onClick={togglePaused}
+          disabled={pauseChanging}
+        >
+          <span className="material-icons">
+            {thingFxPaused ? 'play_arrow' : 'pause'}
+          </span>
+          {pauseChanging
+            ? thingFxPaused
+              ? 'Resuming…'
+              : 'Pausing…'
+            : thingFxPaused
+              ? 'Resume thingFX'
+              : 'Pause thingFX'}
+        </button>
+      </section>
 
       {devices === null ? (
         <p className={styles.empty}>Loading…</p>
